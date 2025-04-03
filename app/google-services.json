@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "248655486959",
+    "project_id": "ghoast-f480e",
+    "storage_bucket": "ghoast-f480e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:248655486959:android:e812438d57ed3a2074201a",
+        "android_client_info": {
+          "package_name": "com.example.ghoast"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC8unyxTHykujGsCONuaBlxokjIsmQiDQg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

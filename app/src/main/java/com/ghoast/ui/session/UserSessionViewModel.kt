@@ -10,7 +10,7 @@ import kotlinx.coroutines.launch
 
 // ✅ Enum για ασφαλέστερη αναπαράσταση τύπου χρήστη
 enum class UserType {
-    USER, SHOP, UNKNOWN
+    USER, SHOP, UNKNOWN, User, Shop, Unknown
 }
 
 class UserSessionViewModel : ViewModel() {

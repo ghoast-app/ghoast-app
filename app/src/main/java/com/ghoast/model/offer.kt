@@ -8,7 +8,7 @@ data class Offer(
     val description: String = "",        // ✅ Περιγραφή (αν θες να την εμφανίσουμε αργότερα)
     val category: String = "",           // ✅ Κατηγορία (για φίλτρα)
     val discount: String = "",           // ✅ Ποσοστό έκπτωσης ή "1+1"
-    val distanceKm: Double = 0.0,         // ✅ Απόσταση από τον χρήστη (mock)
+    val distanceKm: Int? = null, // ✅ Απόσταση από τον χρήστη (mock)
     val isNew: Boolean = false,           // ✅ Σήμανση ΝΕΟ
     val endsSoon: Boolean = false,        // ✅ Σήμανση λήξης
     val shopId: String = "",

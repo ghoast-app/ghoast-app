@@ -42,6 +42,7 @@ dependencies {
     implementation("androidx.compose.material3:material3:1.1.2")
     implementation("androidx.compose.ui:ui-tooling-preview:1.5.4")
     implementation(libs.firebase.firestore.ktx)
+    implementation(libs.play.services.location)
     debugImplementation("androidx.compose.ui:ui-tooling:1.5.4")
 
     // Navigation Compose
@@ -82,5 +83,6 @@ dependencies {
     implementation("com.google.firebase:firebase-storage-ktx")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.4")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1")
+    implementation("io.coil-kt:coil-compose:2.4.0")
 
 }

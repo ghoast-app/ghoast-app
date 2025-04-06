@@ -27,7 +27,7 @@ fun OffersMapScreen(
 
     // Φόρτωσε τα offers με βάση τα φίλτρα
     LaunchedEffect(selectedCategory, selectedDistance) {
-        viewModel.fetchOffers(selectedCategory, selectedDistance)
+        viewModel.fetchOffers()
     }
 
     val athens = LatLng(37.9838, 23.7275)

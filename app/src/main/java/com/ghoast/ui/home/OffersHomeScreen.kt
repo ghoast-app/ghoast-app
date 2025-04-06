@@ -1,108 +1,70 @@
 package com.ghoast.ui.home
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import com.ghoast.ui.home.OffersViewModel
 import com.ghoast.ui.session.UserSessionViewModel
-
-@OptIn(ExperimentalMaterial3Api::class)
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 
 @Composable
 fun OffersHomeScreen(navController: NavHostController) {
     val viewModel: OffersViewModel = viewModel()
+    val offers = viewModel.filteredOffers.collectAsState().value
     val sessionViewModel: UserSessionViewModel = viewModel()
 
-    val offers by viewModel.filteredOffers.collectAsState()
-    val isLoggedIn by sessionViewModel.isLoggedIn.collectAsState()
-
-    var selectedCategory by remember { mutableStateOf<String?>(null) }
-    var selectedDistance by remember { mutableStateOf<Int?>(null) }
+    // ✅ State για την εμφάνιση/απόκρυψη του dropdown men
     var menuExpanded by remember { mutableStateOf(false) }
-    var showHelpDialog by remember { mutableStateOf(false) }
-    var showContactDialog by remember { mutableStateOf(false) }
-    var favorites by remember { mutableStateOf(setOf<String>()) }
 
-    // 🔄 Φόρτωσε προσφορές με βάση τα φίλτρα
-    LaunchedEffect(selectedCategory, selectedDistance) {
-        viewModel.fetchOffers(selectedCategory, selectedDistance)
-    }
+
+
 
     Column(modifier = Modifier.fillMaxSize()) {
 
+        // ✅ TopAppBar με το dynamic menu
         OffersTopBar(
             navController = navController,
             sessionViewModel = sessionViewModel,
-            onMenuExpand = { menuExpanded = it },
-            onShowHelp = { showHelpDialog = true },
-            onShowContact = { showContactDialog = true },
+            onMenuExpand = { expanded -> menuExpanded = expanded },
+            onShowHelp = {
+                // TODO: Προσθήκη διαλόγου ή οθόνης βοήθειας
+            },
+            onShowContact = {
+                // TODO: Προσθήκη διαλόγου ή οθόνης επικοινωνίας
+            },
             menuExpanded = menuExpanded
         )
 
+        // ✅ Φίλτρα (Κατηγορία / Απόσταση)
         OffersFiltersSection(
-            selectedCategory = selectedCategory,
-            selectedDistance = selectedDistance,
-            onCategoryChange = { selectedCategory = it },
-            onDistanceChange = { selectedDistance = it }
+            selectedCategory = viewModel.selectedCategory,
+            selectedDistance = viewModel.selectedDistance,
+            onCategoryChange = { category ->
+                viewModel.selectedCategory = category
+                viewModel.fetchOffers()
+            },
+            onDistanceChange = { distance ->
+                viewModel.selectedDistance = distance
+                viewModel.fetchOffers()
+            }
         )
+
+        // ✅ Εδώ θα μπει η λίστα ή ο χάρτης με τις προσφορές
+        val favorites = viewModel.favoriteOfferIds.collectAsState().value
 
         OffersListSection(
             offers = offers,
             favorites = favorites,
-            onToggleFavorite = { offerId ->
-                favorites = if (favorites.contains(offerId)) {
-                    favorites - offerId
-                } else {
-                    favorites + offerId
-                }
-            }
+            onToggleFavorite = { viewModel.toggleFavorite(it) }
         )
-    }
 
-    // 💬 Help Dialog
-    if (showHelpDialog) {
-        AlertDialog(
-            onDismissRequest = { showHelpDialog = false },
-            confirmButton = {
-                TextButton(onClick = { showHelpDialog = false }) {
-                    Text("OK")
-                }
-            },
-            title = { Text("🛍️ Οδηγίες Χρήσης") },
-            text = {
-                Text(
-                    "• Αναζήτησε προσφορές από τοπικά καταστήματα.\n" +
-                            "• Κάνε login για να αποθηκεύεις αγαπημένα.\n" +
-                            "• Δες προσφορές σε λίστα ή χάρτη.\n" +
-                            "• Τα καταστήματα μπορούν να κάνουν εγγραφή και να προσθέτουν προσφορές."
-                )
-            }
-        )
-    }
 
-    // ☎️ Contact Dialog
-    if (showContactDialog) {
-        AlertDialog(
-            onDismissRequest = { showContactDialog = false },
-            confirmButton = {
-                TextButton(onClick = { showContactDialog = false }) {
-                    Text("OK")
-                }
-            },
-            title = { Text("📞 Επικοινωνία") },
-            text = {
-                Text(
-                    "• Email: support@ghoastapp.com\n" +
-                            "• Τηλέφωνο: +30 210 1234567\n" +
-                            "• Ώρες: Δευ–Παρ, 10:00–17:00"
-                )
-            }
-        )
     }
 }
+

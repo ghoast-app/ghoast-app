@@ -8,10 +8,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
 fun RegisterUserScreen(navController: NavController) {
     val auth = FirebaseAuth.getInstance()
+    val db = FirebaseFirestore.getInstance()
 
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -52,10 +54,23 @@ fun RegisterUserScreen(navController: NavController) {
                 auth.createUserWithEmailAndPassword(email, password)
                     .addOnCompleteListener { task ->
                         if (task.isSuccessful) {
-                            success = true
-                            errorMessage = null
+                            val userId = auth.currentUser?.uid
+                            if (userId != null) {
+                                val userData = mapOf(
+                                    "email" to email,
+                                    "createdAt" to System.currentTimeMillis()
+                                )
+                                db.collection("users").document(userId)
+                                    .set(userData)
+                                    .addOnSuccessListener {
+                                        success = true
+                                        errorMessage = null
+                                    }
+                                    .addOnFailureListener {
+                                        errorMessage = "Απέτυχε η αποθήκευση χρήστη στο Firestore"
+                                    }
+                            }
                         } else {
-                            success = false
                             errorMessage = task.exception?.message
                         }
                     }
@@ -72,7 +87,7 @@ fun RegisterUserScreen(navController: NavController) {
 
         if (success) {
             Spacer(modifier = Modifier.height(16.dp))
-            Text(text = "Registration successful!", color = MaterialTheme.colorScheme.primary)
+            Text("Εγγραφή επιτυχής!", color = MaterialTheme.colorScheme.primary)
         }
     }
 }

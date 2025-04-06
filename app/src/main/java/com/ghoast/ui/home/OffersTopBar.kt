@@ -1,5 +1,6 @@
 package com.ghoast.ui.home
 
+import android.util.Log
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Place
@@ -44,6 +45,8 @@ fun OffersTopBar(
         onDismissRequest = { onMenuExpand(false) }
     ) {
         if (isLoggedIn) {
+            Log.d("TOP_BAR", "userType = $userType, isLoggedIn = $isLoggedIn")
+
             when (userType) {
                 UserType.USER -> {
                     DropdownMenuItem(
@@ -57,6 +60,13 @@ fun OffersTopBar(
                         text = { Text("Αγαπημένες Προσφορές") },
                         onClick = {
                             navController.navigate("favorite_offers")
+                            onMenuExpand(false)
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Λίστα Καταστημάτων") },
+                        onClick = {
+                            navController.navigate("all_shops")
                             onMenuExpand(false)
                         }
                     )
@@ -93,7 +103,15 @@ fun OffersTopBar(
                     )
                 }
 
-                else -> {}
+                UserType.UNKNOWN -> {
+                    DropdownMenuItem(
+                        text = { Text("Login") },
+                        onClick = {
+                            navController.navigate("login")
+                            onMenuExpand(false)
+                        }
+                    )
+                }
             }
 
             DropdownMenuItem(

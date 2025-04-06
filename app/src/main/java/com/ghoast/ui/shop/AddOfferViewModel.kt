@@ -43,7 +43,10 @@ class AddOfferViewModel : ViewModel() {
                 // 🔹 2. Λήψη στοιχείων καταστήματος
                 val shopSnapshot = db.collection("shops").document(shopId).get().await()
                 val shopName = shopSnapshot.getString("shopName") ?: ""
-                val shopImageUrl = shopSnapshot.getString("shopImageUrl") ?: ""
+                val profilePhotoUri = shopSnapshot.getString("profilePhotoUri") ?: ""
+
+
+
 
                 // 🔹 3. Δημιουργία προσφοράς
                 val offer = hashMapOf(
@@ -53,7 +56,7 @@ class AddOfferViewModel : ViewModel() {
                     "category" to category,
                     "shopId" to shopId,
                     "shopName" to shopName,
-                    "shopImageUrl" to shopImageUrl,
+                    "profilePhotoUri" to profilePhotoUri,
                     "imageUrls" to imageUrls,
                     "timestamp" to System.currentTimeMillis(),
                     "distanceKm" to 1,

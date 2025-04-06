@@ -12,6 +12,7 @@ import com.ghoast.ui.home.OffersViewModel
 import com.ghoast.ui.session.UserSessionViewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
 
 @Composable
 fun OffersHomeScreen(navController: NavHostController) {
@@ -19,11 +20,13 @@ fun OffersHomeScreen(navController: NavHostController) {
     val offers = viewModel.filteredOffers.collectAsState().value
     val sessionViewModel: UserSessionViewModel = viewModel()
 
-    // ✅ State για την εμφάνιση/απόκρυψη του dropdown men
+    // ✅ State για την εμφάνιση/απόκρυψη του dropdown menu
     var menuExpanded by remember { mutableStateOf(false) }
 
-
-
+    // ✅ Snapshot listener για live ενημέρωση προσφορών
+    LaunchedEffect(Unit) {
+        viewModel.listenToOffers()
+    }
 
     Column(modifier = Modifier.fillMaxSize()) {
 
@@ -60,11 +63,9 @@ fun OffersHomeScreen(navController: NavHostController) {
 
         OffersListSection(
             offers = offers,
-            favorites = favorites,
+            favorites = favorites.toList(),
             onToggleFavorite = { viewModel.toggleFavorite(it) }
         )
-
-
     }
 }
 

@@ -1,8 +1,10 @@
 package com.ghoast.ui.home
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.FavoriteBorder
@@ -12,28 +14,65 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import com.ghoast.model.Offer
 
 @Composable
-fun OfferCard(offer: Offer, isFavorite: Boolean, onToggleFavorite: () -> Unit) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+fun OfferCard(
+    offer: Offer,
+    isFavorite: Boolean,
+    onToggleFavorite: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+
+            // 🔹 Εικόνα προσφοράς (η πρώτη)
+            offer.imageUrls.firstOrNull()?.let { imageUrl ->
                 Image(
-                    painter = rememberAsyncImagePainter(offer.shopImageUrl),
-                    contentDescription = "Shop Image",
+                    painter = rememberAsyncImagePainter(imageUrl),
+                    contentDescription = "Offer Image",
                     modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
+                        .fillMaxWidth()
+                        .height(180.dp)
+                        .clip(RoundedCornerShape(10.dp)),
+                    contentScale = ContentScale.Crop
                 )
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
+            // 🔹 Εικόνα καταστήματος + Όνομα + Απόσταση + Καρδιά
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+
+                if (offer.profilePhotoUri.isNotEmpty()) {
+                    Image(
+                        painter = rememberAsyncImagePainter(offer.profilePhotoUri),
+                        contentDescription = "Shop Profile Image",
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+
                 Spacer(modifier = Modifier.width(12.dp))
+
                 Column(modifier = Modifier.weight(1f)) {
                     Text(offer.shopName, fontWeight = FontWeight.Bold)
-                    Text("Απόσταση: ${offer.distanceKm} km", style = MaterialTheme.typography.bodySmall)
+                    offer.distanceKm?.let {
+                        Text("Απόσταση: ${it}km", style = MaterialTheme.typography.bodySmall)
+                    }
                 }
+
                 IconButton(onClick = onToggleFavorite) {
                     Icon(
                         imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
@@ -43,18 +82,25 @@ fun OfferCard(offer: Offer, isFavorite: Boolean, onToggleFavorite: () -> Unit) {
             }
 
             Spacer(modifier = Modifier.height(8.dp))
-            Text(offer.title, style = MaterialTheme.typography.titleMedium)
-            Text(offer.description, style = MaterialTheme.typography.bodyMedium)
-            Spacer(modifier = Modifier.height(4.dp))
 
-            Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+            Text(text = offer.title, style = MaterialTheme.typography.titleMedium)
+            Text(text = offer.description, style = MaterialTheme.typography.bodyMedium)
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 AssistChip(
                     onClick = {},
-                    label = { Text(offer.category) },
-                    modifier = Modifier.padding(end = 8.dp)
+                    label = { Text(offer.category) }
                 )
-                if (offer.isNew) Text("ΝΕΟ", color = Color.Green, fontWeight = FontWeight.Bold)
-                if (offer.endsSoon) Text("Λήγει σύντομα!", color = Color.Red, fontWeight = FontWeight.Bold)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(text = "-${offer.discount}", color = Color.Red, fontWeight = FontWeight.Bold)
+                    if (offer.isNew) Text("ΝΕΟ", color = Color.Green, fontWeight = FontWeight.Bold)
+                    if (offer.endsSoon) Text("Λήγει σύντομα!", color = Color.Red, fontWeight = FontWeight.Bold)
+                }
             }
         }
     }

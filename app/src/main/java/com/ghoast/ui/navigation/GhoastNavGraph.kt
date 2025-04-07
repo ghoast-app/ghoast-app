@@ -4,11 +4,13 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.ghoast.ui.home.OffersHomeScreen
 import com.ghoast.ui.login.LoginScreen
 import com.ghoast.ui.register.RegisterUserScreen
 import com.ghoast.ui.register.RegisterShopScreen
 import com.ghoast.ui.navigation.Screen
+import com.ghoast.ui.offers.OfferDetailsScreen
 import com.ghoast.ui.shop.AddOfferScreen
 
 @Composable
@@ -31,6 +33,13 @@ fun GhoastNavGraph(navController: NavHostController) {
         }
         composable(Screen.AddOffer.route) {
             AddOfferScreen(navController)
+        }
+        composable(
+            route = Screen.OfferDetails.route,
+            arguments = listOf(navArgument("offerId") { defaultValue = "" })
+        ) { backStackEntry ->
+            val offerId = backStackEntry.arguments?.getString("offerId") ?: ""
+            OfferDetailsScreen(navController = navController, offerId = offerId)
         }
 
         // 👉 Εδώ μπορείς να προσθέσεις κι άλλες διαδρομές όταν χρειαστεί

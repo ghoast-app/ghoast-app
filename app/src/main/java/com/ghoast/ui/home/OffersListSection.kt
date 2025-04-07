@@ -7,13 +7,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.ghoast.model.Offer
+import com.ghoast.ui.navigation.Screen
 
 @Composable
 fun OffersListSection(
     offers: List<Offer>,
     favorites: List<String>,
-    onToggleFavorite: (String) -> Unit
+    onToggleFavorite: (String) -> Unit,
+    navController: NavController
 ) {
     LazyColumn(
         modifier = Modifier
@@ -25,7 +28,10 @@ fun OffersListSection(
             OfferCard(
                 offer = offer,
                 isFavorite = favorites.contains(offer.id),
-                onToggleFavorite = { onToggleFavorite(offer.id) }
+                onToggleFavorite = { onToggleFavorite(offer.id) },
+                onClick = {
+                    navController.navigate(Screen.OfferDetails.createRoute(offer.id))
+                }
             )
         }
     }

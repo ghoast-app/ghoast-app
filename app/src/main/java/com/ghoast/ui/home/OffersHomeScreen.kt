@@ -64,8 +64,8 @@ fun OffersHomeScreen(navController: NavHostController) {
         OffersListSection(
             offers = offers,
             favorites = favorites.toList(),
-            onToggleFavorite = { viewModel.toggleFavorite(it) }
+            onToggleFavorite = { viewModel.toggleFavorite(it) },
+            navController = navController // ✅ Εδώ περνάμε τον controller
         )
     }
 }
-

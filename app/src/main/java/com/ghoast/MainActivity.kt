@@ -10,6 +10,7 @@ import androidx.navigation.compose.rememberNavController
 import com.ghoast.ui.navigation.GhoastNavGraph
 import com.ghoast.ui.theme.GhoastTheme
 import com.google.android.libraries.places.api.Places
+import com.example.ghoast.BuildConfig
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -17,10 +18,11 @@ class MainActivity : ComponentActivity() {
 
         // 🔑 Μην ξεχάσεις να βάλεις το κανονικό API key εδώ!
         if (!Places.isInitialized()) {
-            Places.initialize(applicationContext, "AIzaSyCywkXm5g4z37zkJu0grCNfx_pagNokJaE")
-        }
+            val apiKey = BuildConfig.MAPS_API_KEY
+            Places.initialize(applicationContext, apiKey)
 
-        setContent {
+
+            setContent {
             GhoastTheme {
                 val navController = rememberNavController()
                 Surface(modifier = Modifier.fillMaxSize()) {
@@ -29,4 +31,5 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+}
 }

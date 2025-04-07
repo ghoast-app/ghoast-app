@@ -2,6 +2,7 @@ package com.ghoast.ui.home
 
 import android.util.Log
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -24,10 +25,13 @@ import com.ghoast.model.Offer
 fun OfferCard(
     offer: Offer,
     isFavorite: Boolean,
-    onToggleFavorite: () -> Unit
+    onToggleFavorite: () -> Unit,
+    onClick: () -> Unit // ✅ νέο
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }, // ✅ navigation ενεργοποιείται
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
@@ -52,7 +56,6 @@ fun OfferCard(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-
                 if (offer.profilePhotoUri.isNotEmpty()) {
                     Image(
                         painter = rememberAsyncImagePainter(offer.profilePhotoUri),

@@ -5,6 +5,7 @@ plugins {
 }
 
 android {
+
     namespace = "com.example.ghoast"
     compileSdk = 34
 
@@ -14,8 +15,12 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
-    }
 
+        buildConfigField("String", "MAPS_API_KEY", "\"${properties["MAPS_API_KEY"]}\"")
+
+    }
+    buildFeatures {
+        buildConfig = true
     buildFeatures {
         compose = true
     }
@@ -86,4 +91,5 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.4.0")
     implementation("com.google.android.libraries.places:places:3.3.0")
 
+}
 }

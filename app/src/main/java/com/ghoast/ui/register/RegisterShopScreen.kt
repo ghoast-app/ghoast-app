@@ -1,5 +1,7 @@
 package com.ghoast.ui.register
 
+import android.app.Activity
+import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -20,10 +22,13 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.libraries.places.api.model.Place
+import com.google.android.libraries.places.widget.Autocomplete
+import com.google.android.libraries.places.widget.model.AutocompleteActivityMode
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.ghoast.ui.navigation.Screen
-import com.ghoast.ui.register.RegisterShopScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,6 +41,7 @@ fun RegisterShopScreen(navController: NavHostController) {
     var password by remember { mutableStateOf("") }
     var shopName by remember { mutableStateOf("") }
     var address by remember { mutableStateOf("") }
+    var latLng by remember { mutableStateOf<LatLng?>(null) }
     var website by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
 
@@ -51,11 +57,20 @@ fun RegisterShopScreen(navController: NavHostController) {
     var imageUri by remember { mutableStateOf<Uri?>(null) }
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        imageUri = uri
-    }
+    ) { uri: Uri? -> imageUri = uri }
 
     var isLoading by remember { mutableStateOf(false) }
+
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val data = result.data
+            val place = Autocomplete.getPlaceFromIntent(data!!)
+            address = place.address ?: ""
+            latLng = place.latLng
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -68,7 +83,24 @@ fun RegisterShopScreen(navController: NavHostController) {
         OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text("Email") }, modifier = Modifier.fillMaxWidth())
         OutlinedTextField(value = password, onValueChange = { password = it }, label = { Text("Password") }, modifier = Modifier.fillMaxWidth(), visualTransformation = PasswordVisualTransformation())
         OutlinedTextField(value = shopName, onValueChange = { shopName = it }, label = { Text("Όνομα Καταστήματος") }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(value = address, onValueChange = { address = it }, label = { Text("Διεύθυνση") }, modifier = Modifier.fillMaxWidth())
+
+        // 👉 Κουμπί για επιλογή διεύθυνσης
+        Button(onClick = {
+            val fields = listOf(
+                Place.Field.ID,
+                Place.Field.NAME,
+                Place.Field.ADDRESS,
+                Place.Field.LAT_LNG
+            )
+            val intent = Autocomplete.IntentBuilder(
+                AutocompleteActivityMode.OVERLAY,
+                fields
+            ).build(context)
+            launcher.launch(intent)
+        }) {
+            Text(if (address.isBlank()) "Επιλέξτε διεύθυνση" else address)
+        }
+
         OutlinedTextField(value = website, onValueChange = { website = it }, label = { Text("Ιστοσελίδα") }, modifier = Modifier.fillMaxWidth())
         OutlinedTextField(value = phone, onValueChange = { phone = it }, label = { Text("Τηλέφωνο") }, modifier = Modifier.fillMaxWidth())
 
@@ -154,6 +186,8 @@ fun RegisterShopScreen(navController: NavHostController) {
                                 "email" to email,
                                 "shopName" to shopName,
                                 "address" to address,
+                                "latitude" to latLng?.latitude,
+                                "longitude" to latLng?.longitude,
                                 "website" to website,
                                 "phone" to phone,
                                 "categories" to selectedCategories,

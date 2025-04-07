@@ -1,9 +1,9 @@
 package com.ghoast.ui.shop
 
 import android.net.Uri
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -47,12 +47,14 @@ fun AddOfferScreen(navController: NavController) {
     )
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = androidx.activity.result.contract.ActivityResultContracts.GetMultipleContents()
+        contract = ActivityResultContracts.GetMultipleContents()
     ) { uris: List<Uri> ->
-        if (uris.size + imageUris.size <= 3) {
-            imageUris.addAll(uris)
-        } else {
-            Toast.makeText(context, "Μπορείτε να ανεβάσετε μέχρι 3 εικόνες", Toast.LENGTH_SHORT).show()
+        val availableSlots = 3 - imageUris.size
+        val urisToAdd = uris.take(availableSlots)
+        imageUris.addAll(urisToAdd)
+
+        if (uris.size > availableSlots) {
+            Toast.makeText(context, "Μπορείτε να ανεβάσετε μέχρι 3 εικόνες.", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -175,24 +177,35 @@ fun AddOfferScreen(navController: NavController) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Button(onClick = {
-            scope.launch {
-                viewModel.saveOffer(
-                    title = title.text,
-                    description = description.text,
-                    discount = selectedDiscount.orEmpty(),
-                    category = selectedCategory.orEmpty(),
-                    imageUris = imageUris,
-                    onSuccess = {
-                        Toast.makeText(context, "Η προσφορά αποθηκεύτηκε!", Toast.LENGTH_SHORT).show()
-                        navController.popBackStack()
-                    },
-                    onError = {
-                        Toast.makeText(context, "Σφάλμα: ${it.message}", Toast.LENGTH_LONG).show()
-                    }
-                )
-            }
-        }, modifier = Modifier.fillMaxWidth()) {
+        Button(
+            onClick = {
+                if (title.text.isBlank() || description.text.isBlank() ||
+                    selectedDiscount.isNullOrBlank() || selectedCategory.isNullOrBlank() ||
+                    imageUris.isEmpty()
+                ) {
+                    Toast.makeText(context, "Συμπληρώστε όλα τα πεδία και επιλέξτε εικόνες.", Toast.LENGTH_LONG).show()
+                    return@Button
+                }
+
+                scope.launch {
+                    viewModel.saveOffer(
+                        title = title.text,
+                        description = description.text,
+                        discount = selectedDiscount.orEmpty(),
+                        category = selectedCategory.orEmpty(),
+                        imageUris = imageUris,
+                        onSuccess = {
+                            Toast.makeText(context, "Η προσφορά αποθηκεύτηκε!", Toast.LENGTH_SHORT).show()
+                            navController.popBackStack()
+                        },
+                        onError = {
+                            Toast.makeText(context, "Σφάλμα: ${it.message}", Toast.LENGTH_LONG).show()
+                        }
+                    )
+                }
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
             Text("Αποθήκευση Προσφοράς")
         }
     }

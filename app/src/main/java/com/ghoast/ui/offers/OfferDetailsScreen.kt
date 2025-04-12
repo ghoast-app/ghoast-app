@@ -6,6 +6,9 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -40,20 +43,28 @@ fun OfferDetailsScreen(
             CircularProgressIndicator()
         }
     } else if (offer != null && shop != null) {
-
-        val currentShop = shop!! // ✅ ασφαλής χρήση
+        val currentShop = shop!!
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            // 🔄 Hint πάνω από τις εικόνες
+            if (offer!!.imageUrls.size > 1) {
+                Text(
+                    text = "➡️ Σύρε δεξιά για να δεις όλες τις εικόνες",
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+
             // 📸 Εικόνες προσφοράς
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(offer!!.imageUrls.size) { index ->
+                itemsIndexed(offer!!.imageUrls) { _, imageUrl ->
                     Image(
-                        painter = rememberAsyncImagePainter(offer!!.imageUrls[index]),
+                        painter = rememberAsyncImagePainter(imageUrl),
                         contentDescription = null,
                         modifier = Modifier
                             .height(200.dp)
@@ -63,21 +74,15 @@ fun OfferDetailsScreen(
                 }
             }
 
-            // 🏷️ Τίτλος και Ποσοστό έκπτωσης
             Text(offer!!.title, style = MaterialTheme.typography.headlineSmall)
             Text("Έκπτωση: ${offer!!.discount}", style = MaterialTheme.typography.titleMedium)
-
-            // 💬 Περιγραφή
             Text(offer!!.description, style = MaterialTheme.typography.bodyMedium)
 
             Divider()
 
-            // 🏪 Πληροφορίες καταστήματος
             Text("Κατάστημα", style = MaterialTheme.typography.titleMedium)
-
             Text(currentShop.shopName)
 
-            // 📍 Διεύθυνση → Google Maps
             Text(
                 text = currentShop.address,
                 color = MaterialTheme.colorScheme.primary,
@@ -89,7 +94,6 @@ fun OfferDetailsScreen(
                 }
             )
 
-            // ☎ Τηλέφωνο → Κλήση
             Text(
                 text = "📞 ${currentShop.phone}",
                 color = MaterialTheme.colorScheme.primary,
@@ -101,7 +105,6 @@ fun OfferDetailsScreen(
                 }
             )
 
-            // 📧 Email → Αποστολή
             Text(
                 text = "📧 ${currentShop.email}",
                 color = MaterialTheme.colorScheme.primary,
@@ -113,7 +116,6 @@ fun OfferDetailsScreen(
                 }
             )
 
-            // 🌐 Website → Άνοιγμα browser
             Text(
                 text = "🌐 ${currentShop.website}",
                 color = MaterialTheme.colorScheme.primary,
@@ -123,10 +125,13 @@ fun OfferDetailsScreen(
                 }
             )
 
-            // 🕒 Ώρες λειτουργίας
-            Text("🕒 Ώρες: ${currentShop.workingHours}")
+            if (currentShop.workingHours.isNotEmpty()) {
+                Text("🕒 Ώρες λειτουργίας", style = MaterialTheme.typography.titleMedium)
+                currentShop.workingHours.forEach {
+                    Text("• ${it.day}: ${it.from ?: "-"} - ${it.to ?: "-"}")
+                }
+            }
         }
-
     } else {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text("Η προσφορά δεν βρέθηκε.")

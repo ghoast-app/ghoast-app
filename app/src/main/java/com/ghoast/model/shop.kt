@@ -1,4 +1,5 @@
 package com.ghoast.model
+import com.ghoast.model.WorkingHour
 
 data class Shop(
     val id: String = "",
@@ -11,6 +12,7 @@ data class Shop(
     val categories: List<String> = emptyList(),
     val latitude: Double = 0.0,
     val longitude: Double = 0.0,
-    val workingHours: String = ""
+    val workingHours: List<WorkingHour> = emptyList()
+
 
 )

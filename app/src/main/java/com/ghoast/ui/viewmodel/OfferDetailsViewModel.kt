@@ -4,8 +4,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.ghoast.model.Offer
 import com.ghoast.model.Shop
+import com.ghoast.model.WorkingHour
 import com.google.firebase.firestore.FirebaseFirestore
-import com.ghoast.viewmodel.OfferDetailsViewModel
 
 class OfferDetailsViewModel : ViewModel() {
 
@@ -28,7 +28,17 @@ class OfferDetailsViewModel : ViewModel() {
                     db.collection("shops").document(shopId).get()
                         .addOnSuccessListener { shopSnapshot ->
                             val shop = shopSnapshot.toObject(Shop::class.java)
-                            shopState.value = shop
+
+                            // ✅ Μετατροπή workingHours από Firestore
+                            val workingHoursList = (shopSnapshot["workingHours"] as? List<Map<String, Any>>)?.mapNotNull { map ->
+                                val day = map["day"] as? String ?: return@mapNotNull null
+                                val from = map["from"] as? String
+                                val to = map["to"] as? String
+                                val enabled = map["enabled"] as? Boolean ?: false
+                                WorkingHour(day = day, from = from, to = to, enabled = enabled)
+                            } ?: emptyList()
+
+                            shopState.value = shop?.copy(workingHours = workingHoursList)
                             isLoading.value = false
                         }
                         .addOnFailureListener {

@@ -6,11 +6,11 @@ plugins {
 
 android {
 
-    namespace = "com.example.ghoast"
+    namespace = "com.ghoast"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.ghoast"
+        applicationId = "com.ghoast"
         minSdk = 26
         targetSdk = 34
         versionCode = 1
@@ -21,7 +21,6 @@ android {
     }
     buildFeatures {
         buildConfig = true
-    buildFeatures {
         compose = true
     }
 
@@ -90,6 +89,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1")
     implementation("io.coil-kt:coil-compose:2.4.0")
     implementation("com.google.android.libraries.places:places:3.3.0")
+    implementation("com.google.android.libraries.places:places:3.3.0")
+    implementation("androidx.compose.foundation:foundation:1.5.4")
 
-}
 }

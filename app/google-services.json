@@ -7,15 +7,15 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:248655486959:android:e812438d57ed3a2074201a",
+        "mobilesdk_app_id": "1:248655486959:android:9b30a90fa70e89ed74201a",
         "android_client_info": {
-          "package_name": "com.example.ghoast"
+          "package_name": "com.ghoast"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyC8unyxTHykujGsCONuaBlxokjIsmQiDQg"
+          "current_key": "AIzaSyAXSalPhyJ4QID_yqQ3Iu2Zanhy8spZPHQ"
         }
       ],
       "services": {

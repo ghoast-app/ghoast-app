@@ -9,7 +9,10 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.*
@@ -18,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -44,6 +48,7 @@ fun RegisterShopScreen(navController: NavHostController) {
     var latLng by remember { mutableStateOf<LatLng?>(null) }
     var website by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
+    var workingHours by remember { mutableStateOf("") }
 
     val categoryOptions = listOf(
         "Ανδρική ένδυση", "Ανδρική υπόδηση",
@@ -72,19 +77,23 @@ fun RegisterShopScreen(navController: NavHostController) {
         }
     }
 
+    val scrollState = rememberScrollState()
+
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(scrollState)
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        Spacer(modifier = Modifier.height(32.dp))
+
         Text("Εγγραφή Καταστήματος", style = MaterialTheme.typography.headlineSmall)
 
         OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text("Email") }, modifier = Modifier.fillMaxWidth())
         OutlinedTextField(value = password, onValueChange = { password = it }, label = { Text("Password") }, modifier = Modifier.fillMaxWidth(), visualTransformation = PasswordVisualTransformation())
         OutlinedTextField(value = shopName, onValueChange = { shopName = it }, label = { Text("Όνομα Καταστήματος") }, modifier = Modifier.fillMaxWidth())
 
-        // 👉 Κουμπί για επιλογή διεύθυνσης
         Button(onClick = {
             val fields = listOf(
                 Place.Field.ID,
@@ -102,9 +111,27 @@ fun RegisterShopScreen(navController: NavHostController) {
         }
 
         OutlinedTextField(value = website, onValueChange = { website = it }, label = { Text("Ιστοσελίδα") }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(value = phone, onValueChange = { phone = it }, label = { Text("Τηλέφωνο") }, modifier = Modifier.fillMaxWidth())
 
-        // Multi-select Dropdown
+        // ✅ ΜΟΝΟ αριθμοί στο τηλέφωνο
+        OutlinedTextField(
+            value = phone,
+            onValueChange = { newValue ->
+                if (newValue.all { it.isDigit() }) {
+                    phone = newValue
+                }
+            },
+            label = { Text("Τηλέφωνο") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        OutlinedTextField(
+            value = workingHours,
+            onValueChange = { workingHours = it },
+            label = { Text("Ώρες Λειτουργίας") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
         ExposedDropdownMenuBox(
             expanded = categoryDropdownExpanded,
             onExpandedChange = { categoryDropdownExpanded = !categoryDropdownExpanded }
@@ -144,7 +171,6 @@ fun RegisterShopScreen(navController: NavHostController) {
             }
         }
 
-        // Profile Image Picker
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -171,7 +197,6 @@ fun RegisterShopScreen(navController: NavHostController) {
             Text("Επιλογή φωτογραφίας προφίλ")
         }
 
-        // Register Button
         Button(
             onClick = {
                 isLoading = true
@@ -190,6 +215,7 @@ fun RegisterShopScreen(navController: NavHostController) {
                                 "longitude" to latLng?.longitude,
                                 "website" to website,
                                 "phone" to phone,
+                                "workingHours" to workingHours,
                                 "categories" to selectedCategories,
                                 "profilePhotoUri" to imageUri?.toString()
                             )

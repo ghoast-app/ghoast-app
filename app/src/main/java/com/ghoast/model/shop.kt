@@ -10,6 +10,7 @@ data class Shop(
     val profilePhotoUri: String = "",
     val categories: List<String> = emptyList(),
     val latitude: Double = 0.0,
-    val longitude: Double = 0.0
+    val longitude: Double = 0.0,
+    val workingHours: String = ""
 
 )

@@ -91,5 +91,6 @@ dependencies {
     implementation("com.google.android.libraries.places:places:3.3.0")
     implementation("com.google.android.libraries.places:places:3.3.0")
     implementation("androidx.compose.foundation:foundation:1.5.4")
+    implementation("androidx.compose.ui:ui-text:1.5.0") // ή παρόμοια
 
 }

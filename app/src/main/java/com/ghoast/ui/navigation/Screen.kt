@@ -14,6 +14,7 @@ sealed class Screen(val route: String) {
     object AddOffer : Screen("add_offer")
     object MyShopOffers : Screen("my_shop_offers")
     object ShopProfile : Screen("shop_profile")
+    object EditOffer : Screen("edit_offer")
 
 
     object RegisterUser : Screen("register_user")
@@ -21,6 +22,12 @@ sealed class Screen(val route: String) {
 
     object OfferDetails : Screen("offer_details/{offerId}") {
         fun createRoute(offerId: String) = "offer_details/$offerId"
+
+        object Screen {
+            const val MyShopOffers = "my_shop_offers"
+            // ...και τα υπόλοιπα
+        }
+
     }
 
 }

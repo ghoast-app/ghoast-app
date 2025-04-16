@@ -1,5 +1,6 @@
 package com.ghoast.ui.navigation
 
+
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -13,7 +14,9 @@ import com.ghoast.ui.navigation.Screen
 import com.ghoast.ui.offers.EditOfferScreen
 import com.ghoast.ui.offers.OfferDetailsScreen
 import com.ghoast.ui.shop.AddOfferScreen
+import com.ghoast.ui.shop.EditShopProfileScreen
 import com.ghoast.ui.shop.MyShopOffersScreen
+import com.ghoast.ui.shop.ShopProfileScreen
 
 @Composable
 fun GhoastNavGraph(navController: NavHostController) {
@@ -47,6 +50,15 @@ fun GhoastNavGraph(navController: NavHostController) {
             EditOfferScreen(navController = navController, offerId = offerId)
         }
 
+        composable(route = Screen.ShopProfile.route) {
+            ShopProfileScreen(navController = navController)
+        }
+        composable(Screen.EditShopProfile.route) {
+            EditShopProfileScreen()
+        }
+        composable(Screen.ShopProfile.route) {
+            ShopProfileScreen(navController)
+        }
 
         composable(
             route = Screen.OfferDetails.route,

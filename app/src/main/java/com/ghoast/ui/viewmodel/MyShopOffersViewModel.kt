@@ -32,7 +32,8 @@ class MyShopOffersViewModel : ViewModel() {
             .whereEqualTo("shopId", shopId)
             .get()
             .addOnSuccessListener { result ->
-                val offerList = result.documents.mapNotNull { it.toObject(Offer::class.java)?.copy(id = it.id) }
+                val offerList =
+                    result.documents.mapNotNull { it.toObject(Offer::class.java)?.copy(id = it.id) }
                 _offers.value = offerList
                 isLoading.value = false
             }
@@ -42,13 +43,14 @@ class MyShopOffersViewModel : ViewModel() {
             }
     }
 
-    fun deleteOffer(offerId: String) {
+    fun deleteOffer(offerId: String, onSuccess: () -> Unit) {
         isLoading.value = true
         db.collection("offers").document(offerId)
             .delete()
             .addOnSuccessListener {
-                loadMyOffers() // επαναφόρτωση προσφορών
+                loadMyOffers()
                 isLoading.value = false
+                onSuccess()
             }
             .addOnFailureListener {
                 errorMessage.value = "Αποτυχία διαγραφής προσφοράς"

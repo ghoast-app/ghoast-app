@@ -1,6 +1,7 @@
 package com.ghoast.ui.offers
 
 import android.net.Uri
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -21,6 +22,7 @@ import coil.compose.rememberAsyncImagePainter
 import com.ghoast.viewmodel.EditOfferViewModel
 import kotlinx.coroutines.launch
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditOfferScreen(
@@ -35,7 +37,14 @@ fun EditOfferScreen(
     val errorMessage by viewModel.errorMessage.collectAsState()
     val coroutineScope = rememberCoroutineScope()
 
-    // Επιλογές
+    var title by remember { mutableStateOf("") }
+    var description by remember { mutableStateOf("") }
+    var discount by remember { mutableStateOf("") }
+    var category by remember { mutableStateOf("") }
+    var newImageUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
+
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
     val discountOptions = (10..90 step 5).map { "$it%" }
     val categoryOptions = listOf(
         "Ανδρική ένδυση", "Ανδρική υπόδηση",
@@ -44,11 +53,8 @@ fun EditOfferScreen(
         "Αξεσουάρ"
     )
 
-    var title by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
-    var discount by remember { mutableStateOf("") }
-    var category by remember { mutableStateOf("") }
-    var newImageUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
+    val discountDropdownExpanded = remember { mutableStateOf(false) }
+    val categoryDropdownExpanded = remember { mutableStateOf(false) }
 
     val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris ->
         if (uris.size <= 3) {
@@ -58,10 +64,8 @@ fun EditOfferScreen(
         }
     }
 
-    var discountDropdownExpanded by remember { mutableStateOf(false) }
-    var categoryDropdownExpanded by remember { mutableStateOf(false) }
-
     LaunchedEffect(offerId) {
+        Log.d("EditOfferScreen", "Loading offer with ID: $offerId")
         viewModel.loadOffer(offerId)
     }
 
@@ -93,90 +97,84 @@ fun EditOfferScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // Ποσοστό έκπτωσης dropdown
+            // Discount Dropdown
             ExposedDropdownMenuBox(
-                expanded = discountDropdownExpanded,
-                onExpandedChange = { discountDropdownExpanded = !discountDropdownExpanded }
+                expanded = discountDropdownExpanded.value,
+                onExpandedChange = { discountDropdownExpanded.value = !discountDropdownExpanded.value }
             ) {
                 TextField(
                     value = discount,
                     onValueChange = {},
                     readOnly = true,
                     label = { Text("Ποσοστό έκπτωσης") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(discountDropdownExpanded) },
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(discountDropdownExpanded.value)
+                    },
                     modifier = Modifier.menuAnchor().fillMaxWidth()
                 )
-
                 ExposedDropdownMenu(
-                    expanded = discountDropdownExpanded,
-                    onDismissRequest = { discountDropdownExpanded = false }
+                    expanded = discountDropdownExpanded.value,
+                    onDismissRequest = { discountDropdownExpanded.value = false }
                 ) {
                     discountOptions.forEach { option ->
                         DropdownMenuItem(
                             text = { Text(option) },
                             onClick = {
                                 discount = option
-                                discountDropdownExpanded = false
+                                discountDropdownExpanded.value = false
                             }
                         )
                     }
                 }
             }
 
-            // Κατηγορία dropdown
+            // Category Dropdown
             ExposedDropdownMenuBox(
-                expanded = categoryDropdownExpanded,
-                onExpandedChange = { categoryDropdownExpanded = !categoryDropdownExpanded }
+                expanded = categoryDropdownExpanded.value,
+                onExpandedChange = { categoryDropdownExpanded.value = !categoryDropdownExpanded.value }
             ) {
                 TextField(
                     value = category,
                     onValueChange = {},
                     readOnly = true,
                     label = { Text("Κατηγορία") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(categoryDropdownExpanded) },
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(categoryDropdownExpanded.value)
+                    },
                     modifier = Modifier.menuAnchor().fillMaxWidth()
                 )
-
                 ExposedDropdownMenu(
-                    expanded = categoryDropdownExpanded,
-                    onDismissRequest = { categoryDropdownExpanded = false }
+                    expanded = categoryDropdownExpanded.value,
+                    onDismissRequest = { categoryDropdownExpanded.value = false }
                 ) {
                     categoryOptions.forEach { option ->
                         DropdownMenuItem(
                             text = { Text(option) },
                             onClick = {
                                 category = option
-                                categoryDropdownExpanded = false
+                                categoryDropdownExpanded.value = false
                             }
                         )
                     }
                 }
             }
 
-            // Προεπισκόπηση εικόνων
             Text("Εικόνες προσφοράς", style = MaterialTheme.typography.titleMedium)
-
-            if (newImageUris.isNotEmpty()) {
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (newImageUris.isNotEmpty()) {
                     items(newImageUris) { uri ->
                         Image(
                             painter = rememberAsyncImagePainter(uri),
                             contentDescription = null,
-                            modifier = Modifier
-                                .height(160.dp)
-                                .width(250.dp)
+                            modifier = Modifier.size(width = 250.dp, height = 160.dp)
                         )
                     }
-                }
-            } else {
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                } else {
                     items(currentOffer.imageUrls) { url ->
                         Image(
                             painter = rememberAsyncImagePainter(url),
                             contentDescription = null,
-                            modifier = Modifier
-                                .height(160.dp)
-                                .width(250.dp)
+                            modifier = Modifier.size(width = 250.dp, height = 160.dp)
                         )
                     }
                 }
@@ -201,28 +199,65 @@ fun EditOfferScreen(
                             updatedOffer = updatedOffer,
                             newImageUris = newImageUris
                         )
-
                         Toast.makeText(context, "Η προσφορά ενημερώθηκε", Toast.LENGTH_SHORT).show()
                         navController.popBackStack()
                     }
                 },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !isLoading
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Αποθήκευση αλλαγών")
             }
 
+            Button(
+                onClick = {
+                    Log.d("DEBUG_DELETE", "Κουμπί διαγραφής πατήθηκε")
+                    showDeleteDialog = true
+
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+            ) {
+                Text("Διαγραφή προσφοράς")
+            }
+
             if (errorMessage != null) {
-                Text(
-                    text = errorMessage ?: "",
-                    color = MaterialTheme.colorScheme.error
-                )
+                Text(text = errorMessage ?: "", color = MaterialTheme.colorScheme.error)
             }
         }
-    } ?: run {
+    }
+
+    if (showDeleteDialog) {
+        Log.d("DEBUG_DELETE", "Το showDeleteDialog είναι true – προσπαθεί να εμφανιστεί το AlertDialog")
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Επιβεβαίωση διαγραφής") },
+            text = { Text("Είστε σίγουροι ότι θέλετε να διαγράψετε αυτή την προσφορά;") },
+            confirmButton = {
+                TextButton(onClick = {
+                    Log.d("EditOfferScreen", "Confirmed deletion")
+                    showDeleteDialog = false
+                    viewModel.deleteOffer(offerId) {
+                        Toast.makeText(context, "Η προσφορά διαγράφηκε", Toast.LENGTH_SHORT).show()
+                        navController.popBackStack()
+                    }
+                }) {
+                    Text("Ναι")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    Log.d("EditOfferScreen", "Cancelled deletion")
+                    showDeleteDialog = false
+                }) {
+                    Text("Άκυρο")
+                }
+            }
+        )
+    }
+
+    if (offer == null && !isLoading) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            if (isLoading) CircularProgressIndicator()
-            else Text("Η προσφορά δεν βρέθηκε.")
+            Text("Η προσφορά δεν βρέθηκε.")
         }
     }
 }

@@ -10,12 +10,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.ghoast.model.Offer
 import com.ghoast.ui.navigation.Screen
 import com.ghoast.viewmodel.MyShopOffersViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.ghoast.ui.shop.OfferItem
 
 @Composable
 fun MyShopOffersScreen(navController: NavHostController) {
@@ -24,6 +23,10 @@ fun MyShopOffersScreen(navController: NavHostController) {
     val isLoading by viewModel.isLoading.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
     val context = LocalContext.current
+
+    // 🔔 Διαχείριση διαλόγου διαγραφής
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var selectedOfferId by remember { mutableStateOf<String?>(null) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         when {
@@ -53,51 +56,35 @@ fun MyShopOffersScreen(navController: NavHostController) {
                                 navController.navigate(Screen.EditOffer.route + "/${offer.id}")
                             },
                             onDeleteClick = {
-                                viewModel.deleteOffer(offer.id ?: "")
+                                selectedOfferId = offer.id
+                                showDeleteDialog = true
                             }
                         )
                     }
-                    @Composable
-                    fun OfferItem(
-                        offer: Offer,
-                        onEditClick: () -> Unit,
-                        onDeleteClick: () -> Unit
-                    ) {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-                        ) {
-                            Column(modifier = Modifier.padding(16.dp)) {
-                                Text(
-                                    "Τίτλος: ${offer.title}",
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-                                Text(
-                                    "Περιγραφή: ${offer.description}",
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                                Text(
-                                    "Έκπτωση: ${offer.discount}%",
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                                Text(
-                                    "Κατηγορία: ${offer.category}",
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
+                }
 
-                                Spacer(modifier = Modifier.height(8.dp))
-
-                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    Button(onClick = onEditClick) {
-                                        Text("✏ Επεξεργασία")
-                                    }
-                                    OutlinedButton(onClick = onDeleteClick) {
-                                        Text("🗑 Διαγραφή")
-                                    }
+                // 🧨 AlertDialog για επιβεβαίωση διαγραφής
+                if (showDeleteDialog && selectedOfferId != null) {
+                    AlertDialog(
+                        onDismissRequest = { showDeleteDialog = false },
+                        title = { Text("Επιβεβαίωση διαγραφής") },
+                        text = { Text("Είστε σίγουροι ότι θέλετε να διαγράψετε αυτή την προσφορά;") },
+                        confirmButton = {
+                            TextButton(onClick = {
+                                viewModel.deleteOffer(selectedOfferId!!) {
+                                    Toast.makeText(context, "Η προσφορά διαγράφηκε", Toast.LENGTH_SHORT).show()
                                 }
+                                showDeleteDialog = false
+                            }) {
+                                Text("Ναι")
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showDeleteDialog = false }) {
+                                Text("Άκυρο")
                             }
                         }
-                    }
+                    )
                 }
             }
         }

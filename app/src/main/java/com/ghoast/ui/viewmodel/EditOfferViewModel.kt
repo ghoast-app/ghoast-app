@@ -22,7 +22,7 @@ class EditOfferViewModel : ViewModel() {
     val isLoading = MutableStateFlow(false)
     val errorMessage = MutableStateFlow<String?>(null)
 
-    fun loadOfferById(offerId: String) {
+    fun loadOffer(offerId: String) {
         isLoading.value = true
         db.collection("offers").document(offerId).get()
             .addOnSuccessListener { snapshot ->
@@ -34,14 +34,12 @@ class EditOfferViewModel : ViewModel() {
                 isLoading.value = false
             }
     }
-    fun loadOffer(offerId: String) {
-        loadOfferById(offerId)
-    }
 
     fun updateOffer(offerId: String, updatedOffer: Offer, newImageUris: List<Uri>) {
         isLoading.value = true
 
         if (newImageUris.isEmpty()) {
+            // Ενημέρωση χωρίς νέες εικόνες
             db.collection("offers").document(offerId)
                 .set(updatedOffer)
                 .addOnSuccessListener { isLoading.value = false }
@@ -50,6 +48,7 @@ class EditOfferViewModel : ViewModel() {
                     isLoading.value = false
                 }
         } else {
+            // Με νέες εικόνες
             uploadImages(newImageUris) { uploadedUrls ->
                 val offerWithImages = updatedOffer.copy(imageUrls = uploadedUrls)
                 db.collection("offers").document(offerId)
@@ -68,7 +67,7 @@ class EditOfferViewModel : ViewModel() {
             val urls = mutableListOf<String>()
             val total = uris.size
 
-            uris.forEachIndexed { index, uri ->
+            uris.forEachIndexed { _, uri ->
                 val fileName = UUID.randomUUID().toString()
                 val ref = storage.reference.child("offer_images/$fileName")
 
@@ -81,5 +80,19 @@ class EditOfferViewModel : ViewModel() {
                 }
             }
         }
+    }
+
+    fun deleteOffer(offerId: String, onSuccess: () -> Unit) {
+        isLoading.value = true
+        db.collection("offers").document(offerId)
+            .delete()
+            .addOnSuccessListener {
+                isLoading.value = false
+                onSuccess()
+            }
+            .addOnFailureListener {
+                errorMessage.value = "Αποτυχία διαγραφής προσφοράς"
+                isLoading.value = false
+            }
     }
 }

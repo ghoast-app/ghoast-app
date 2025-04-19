@@ -4,6 +4,7 @@ import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ghoast.model.Shop
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
@@ -40,13 +41,15 @@ class AddOfferViewModel : ViewModel() {
                     throw Exception("Απέτυχε το ανέβασμα εικόνων")
                 }
 
-                // 🔹 2. Λήψη στοιχείων καταστήματος
+                // 🔹 2. Ανάκτηση καταστήματος
                 val shopSnapshot = db.collection("shops").document(shopId).get().await()
-                val shopName = shopSnapshot.getString("shopName") ?: ""
-                val profilePhotoUri = shopSnapshot.getString("profilePhotoUri") ?: ""
+                val shop = shopSnapshot.toObject(Shop::class.java)
+                    ?: throw Exception("Δεν βρέθηκαν στοιχεία καταστήματος")
 
-
-
+                val shopName = shop.shopName
+                val profilePhotoUri = shop.profilePhotoUri ?: ""
+                val latitude = shop.latitude ?: 0.0
+                val longitude = shop.longitude ?: 0.0
 
                 // 🔹 3. Δημιουργία προσφοράς
                 val offer = hashMapOf(
@@ -62,14 +65,16 @@ class AddOfferViewModel : ViewModel() {
                     "distanceKm" to 1,
                     "isNew" to true,
                     "endsSoon" to false,
-                    "location" to "",
-                    "latitude" to null,
-                    "longitude" to null
+                    "location" to (shop.address ?: ""),
+                    "latitude" to latitude,
+                    "longitude" to longitude
                 )
 
-                db.collection("offers").add(offer).await()
+                val offerRef = db.collection("offers").document()
+                offer["id"] = offerRef.id
+                offerRef.set(offer).await()
 
-                onSuccess()
+
             } catch (e: Exception) {
                 Log.e("AddOfferViewModel", "❌ Error saving offer", e)
                 onError(e)

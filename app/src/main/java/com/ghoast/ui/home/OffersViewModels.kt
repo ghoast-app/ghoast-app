@@ -37,12 +37,28 @@ class OffersViewModel : ViewModel() {
     }
 
     fun fetchOffers(selectedCategory: String? = null, selectedDistance: Int? = null) {
-        FirebaseFirestore.getInstance()
-            .collection("offers")
+        db.collection("offers")
             .addSnapshotListener { snapshot, error ->
-                if (error != null || snapshot == null) return@addSnapshotListener
+                if (error != null || snapshot == null) {
+                    Log.e("OffersViewModel", "❌ Firestore error", error)
+                    return@addSnapshotListener
+                }
 
-                val allOffers = snapshot.toObjects(Offer::class.java)
+                val allOffers = snapshot.documents.mapNotNull { doc ->
+                    try {
+                        val offer = doc.toObject(Offer::class.java)?.copy(id = doc.id)
+
+                        // Log info for debugging each offer
+                        if (offer != null) {
+                            Log.d("OffersViewModel", "✅ Προσφορά: ${offer.title} (${offer.id}) - Lat: ${offer.latitude}, Lng: ${offer.longitude}")
+                        }
+
+                        offer
+                    } catch (e: Exception) {
+                        Log.e("OffersViewModel", "❌ Error parsing offer", e)
+                        null
+                    }
+                }
 
                 val filtered = allOffers.filter { offer ->
                     val matchesCategory = selectedCategory == null || offer.category == selectedCategory
@@ -52,27 +68,27 @@ class OffersViewModel : ViewModel() {
                                     LocationUtils.calculateHaversineDistance(
                                         userLatitude!!, userLongitude!!,
                                         offer.latitude!!, offer.longitude!!
-                                    ) <= selectedDistance!!
-
+                                    ) <= selectedDistance
                             )
+
                     matchesCategory && matchesDistance
                 }
+
+                Log.i("OffersViewModel", "🎯 Προσφορές συνολικά: ${allOffers.size}, Φιλτραρισμένες: ${filtered.size}")
 
                 _offers.value = allOffers
                 _filteredOffers.value = filtered
             }
     }
 
-
     private fun applyFilters() {
-        val currentDistance = selectedDistance // ✅ safe copy
+        val currentDistance = selectedDistance
         _filteredOffers.value = _offers.value.filter { offer ->
             val matchesCategory = selectedCategory == null || offer.category == selectedCategory
             val matchesDistance = currentDistance == null || (offer.distanceKm != null && offer.distanceKm <= currentDistance)
             matchesCategory && matchesDistance
         }
     }
-
 
     fun fetchFavoriteOffers() {
         val uid = auth.currentUser?.uid ?: return
@@ -83,8 +99,10 @@ class OffersViewModel : ViewModel() {
             .addOnSuccessListener { result ->
                 val ids = result.map { it.id }.toSet()
                 _favoriteOfferIds.value = ids
+                Log.d("OffersViewModel", "⭐ Favorite Offers Loaded: $ids")
             }
     }
+
     fun listenToOffers() {
         db.collection("offers")
             .addSnapshotListener { snapshot, error ->
@@ -95,8 +113,11 @@ class OffersViewModel : ViewModel() {
 
                 val allOffers = snapshot?.documents?.mapNotNull { doc ->
                     try {
-                        val offer = doc.toObject(Offer::class.java)
-                        offer?.copy(id = doc.id)
+                        val offer = doc.toObject(Offer::class.java)?.copy(id = doc.id)
+                        if (offer != null) {
+                            Log.d("OffersViewModel", "🔁 Offer updated: ${offer.title} (${offer.id})")
+                        }
+                        offer
                     } catch (e: Exception) {
                         Log.e("OffersViewModel", "❌ Error parsing offer", e)
                         null

@@ -92,5 +92,8 @@ dependencies {
     implementation("com.google.android.libraries.places:places:3.3.0")
     implementation("androidx.compose.foundation:foundation:1.5.4")
     implementation("androidx.compose.ui:ui-text:1.5.0") // ή παρόμοια
+    implementation("com.google.android.gms:play-services-location:21.0.1")
+    implementation("com.google.maps.android:maps-compose:2.11.4")
+    implementation("com.google.android.gms:play-services-maps:18.2.0")
 
 }

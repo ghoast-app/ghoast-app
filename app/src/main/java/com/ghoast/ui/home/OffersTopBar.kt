@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import com.ghoast.ui.session.UserSessionViewModel
 import com.ghoast.ui.session.UserType
+import com.ghoast.ui.navigation.Screen // ✅ πρόσθεσε αυτό το import
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,7 +34,7 @@ fun OffersTopBar(
         },
         actions = {
             IconButton(onClick = {
-                navController.navigate("offers_map")
+                navController.navigate(Screen.OffersMap.route) // ✅ ΕΔΩ έγινε η αλλαγή
             }) {
                 Icon(Icons.Default.Place, contentDescription = "Χάρτης")
             }
@@ -52,14 +53,14 @@ fun OffersTopBar(
                     DropdownMenuItem(
                         text = { Text("Αγαπημένα Καταστήματα") },
                         onClick = {
-                            navController.navigate("favorite_shops")
+                            navController.navigate(Screen.FavoriteShops.route)
                             onMenuExpand(false)
                         }
                     )
                     DropdownMenuItem(
                         text = { Text("Αγαπημένες Προσφορές") },
                         onClick = {
-                            navController.navigate("favorite_offers")
+                            navController.navigate(Screen.FavoriteOffers.route)
                             onMenuExpand(false)
                         }
                     )
@@ -73,7 +74,7 @@ fun OffersTopBar(
                     DropdownMenuItem(
                         text = { Text("Το προφίλ μου") },
                         onClick = {
-                            navController.navigate("user_profile")
+                            navController.navigate(Screen.UserProfile.route)
                             onMenuExpand(false)
                         }
                     )
@@ -83,21 +84,21 @@ fun OffersTopBar(
                     DropdownMenuItem(
                         text = { Text("➕ Προσθήκη Προσφοράς") },
                         onClick = {
-                            navController.navigate("add_offer")
+                            navController.navigate(Screen.AddOffer.route)
                             onMenuExpand(false)
                         }
                     )
                     DropdownMenuItem(
                         text = { Text("Οι Προσφορές μου") },
                         onClick = {
-                            navController.navigate("my_shop_offers")
+                            navController.navigate(Screen.MyShopOffers.route)
                             onMenuExpand(false)
                         }
                     )
                     DropdownMenuItem(
                         text = { Text("Προφίλ Καταστήματος") },
                         onClick = {
-                            navController.navigate("shop_profile")
+                            navController.navigate(Screen.ShopProfile.route)
                             onMenuExpand(false)
                         }
                     )
@@ -107,7 +108,7 @@ fun OffersTopBar(
                     DropdownMenuItem(
                         text = { Text("Login") },
                         onClick = {
-                            navController.navigate("login")
+                            navController.navigate(Screen.Login.route)
                             onMenuExpand(false)
                         }
                     )
@@ -132,8 +133,8 @@ fun OffersTopBar(
                 text = { Text("Logout") },
                 onClick = {
                     sessionViewModel.logout()
-                    navController.navigate("offers_home") {
-                        popUpTo("offers_home") { inclusive = true }
+                    navController.navigate(Screen.OffersHome.route) {
+                        popUpTo(Screen.OffersHome.route) { inclusive = true }
                     }
                     onMenuExpand(false)
                 }
@@ -142,7 +143,7 @@ fun OffersTopBar(
             DropdownMenuItem(
                 text = { Text("Login") },
                 onClick = {
-                    navController.navigate("login")
+                    navController.navigate(Screen.Login.route)
                     onMenuExpand(false)
                 }
             )

@@ -11,10 +11,12 @@ import com.ghoast.ui.navigation.GhoastNavGraph
 import com.ghoast.ui.theme.GhoastTheme
 import com.google.android.libraries.places.api.Places
 import com.ghoast.BuildConfig
+import com.google.android.gms.maps.MapsInitializer
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
 
         // 🔑 Μην ξεχάσεις να βάλεις το κανονικό API key εδώ!
         if (!Places.isInitialized()) {

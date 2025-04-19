@@ -28,6 +28,7 @@ import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.*
 import kotlinx.coroutines.tasks.await
+
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("MissingPermission")
 @Composable
@@ -39,7 +40,7 @@ fun OffersMapScreen(
     Log.d("MapScreen", "🗺️ OffersMapScreen ξεκίνησε")
 
     val context = LocalContext.current
-    val defaultLatLng = LatLng(35.1856, 33.3823) // Λευκωσία fallback
+    val defaultLatLng = LatLng(35.1856, 33.3823) // Λευκωσία
     var userLatLng by remember { mutableStateOf<LatLng?>(null) }
 
     val cameraPositionState = rememberCameraPositionState {
@@ -49,12 +50,16 @@ fun OffersMapScreen(
     val offers = offersViewModel.filteredOffers.collectAsState().value
     val shops = shopsMapViewModel.shops.collectAsState().value
 
-    Log.d("MapScreen", "📍 Προσφορές loaded: ${offers.size}")
-    Log.d("MapScreen", "🏬 Καταστήματα loaded: ${shops.size}")
+    Log.d("MapScreen", "📍 Προσφορές: ${offers.size}, Καταστήματα: ${shops.size}")
 
     var selectedOffer by remember { mutableStateOf<Offer?>(null) }
     var recenter by remember { mutableStateOf(true) }
 
+    // Tabs state
+    var selectedTabIndex by remember { mutableStateOf(0) }
+    val tabTitles = listOf("Προσφορές", "Καταστήματα")
+
+    // Άδεια + GPS
     LocationPermissionHandler(
         onPermissionGranted = {
             LocationSettingsHelper.checkGpsEnabled(context) { gpsEnabled ->
@@ -101,14 +106,29 @@ fun OffersMapScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Προσφορές στον Χάρτη") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Πίσω")
+            Column {
+                TopAppBar(
+                    title = { Text("Προσφορές στον Χάρτη") },
+                    navigationIcon = {
+                        IconButton(onClick = { navController.popBackStack() }) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Πίσω")
+                        }
+                    }
+                )
+
+                TabRow(selectedTabIndex = selectedTabIndex) {
+                    tabTitles.forEachIndexed { index, title ->
+                        Tab(
+                            selected = selectedTabIndex == index,
+                            onClick = {
+                                selectedTabIndex = index
+                                Log.d("MapScreen", "🗂️ Επιλέχθηκε tab: $title")
+                            },
+                            text = { Text(title) }
+                        )
                     }
                 }
-            )
+            }
         },
         floatingActionButton = {
             FloatingActionButton(
@@ -131,34 +151,40 @@ fun OffersMapScreen(
                 modifier = Modifier.fillMaxSize(),
                 cameraPositionState = cameraPositionState
             ) {
-                // 🔴 Προσφορές
-                offers.forEach { offer ->
-                    val lat = offer.latitude ?: 0.0
-                    val lng = offer.longitude ?: 0.0
+                when (selectedTabIndex) {
+                    0 -> {
+                        // 🔴 Προσφορές
+                        offers.forEach { offer ->
+                            val lat = offer.latitude ?: 0.0
+                            val lng = offer.longitude ?: 0.0
 
-                    if (lat != 0.0 && lng != 0.0) {
-                        Marker(
-                            state = MarkerState(position = LatLng(lat, lng)),
-                            icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED),
-                            onClick = {
-                                selectedOffer = offer
-                                true
+                            if (lat != 0.0 && lng != 0.0) {
+                                Marker(
+                                    state = MarkerState(position = LatLng(lat, lng)),
+                                    icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED),
+                                    onClick = {
+                                        selectedOffer = offer
+                                        true
+                                    }
+                                )
                             }
-                        )
+                        }
                     }
-                }
 
-                // 🔵 Καταστήματα
-                shops.forEach { shop ->
-                    val lat = shop.latitude
-                    val lng = shop.longitude
+                    1 -> {
+                        // 🔵 Καταστήματα
+                        shops.forEach { shop ->
+                            val lat = shop.latitude
+                            val lng = shop.longitude
 
-                    if (lat != 0.0 && lng != 0.0) {
-                        Marker(
-                            state = MarkerState(position = LatLng(lat, lng)),
-                            icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE),
-                            title = shop.shopName
-                        )
+                            if (lat != 0.0 && lng != 0.0) {
+                                Marker(
+                                    state = MarkerState(position = LatLng(lat, lng)),
+                                    icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE),
+                                    title = shop.shopName
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -182,10 +208,8 @@ fun OffersMapScreen(
                             modifier = Modifier
                                 .align(Alignment.End)
                                 .clickable {
-                                    offer.id.let { id ->
-                                        navController.navigate(Screen.OfferDetails.createRoute(id))
-                                        selectedOffer = null
-                                    }
+                                    navController.navigate(Screen.OfferDetails.createRoute(offer.id))
+                                    selectedOffer = null
                                 },
                             color = MaterialTheme.colorScheme.primary,
                             style = MaterialTheme.typography.labelLarge

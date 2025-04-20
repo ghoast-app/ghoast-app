@@ -75,14 +75,17 @@ fun OffersMapScreen(
         LaunchedEffect(Unit) {
             try {
                 val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
-                val location = fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null).await()
+                val location =
+                    fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
+                        .await()
 
                 val target = if (location != null) {
                     LatLng(location.latitude, location.longitude).also {
                         userLatLng = it
                         offersViewModel.userLatitude = it.latitude
                         offersViewModel.userLongitude = it.longitude
-                        offersViewModel.fetchOffers()
+                        offersViewModel.applyFilters()
+
                     }
                 } else {
                     defaultLatLng
@@ -140,9 +143,11 @@ fun OffersMapScreen(
             }
         }
     ) { paddingValues ->
-        Box(modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues)) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
 
             GoogleMap(
                 modifier = Modifier.fillMaxSize(),
@@ -215,19 +220,18 @@ fun OffersMapScreen(
                     selectedCategory = offersViewModel.selectedCategory,
                     selectedDistance = offersViewModel.selectedDistance ?: 10,
                     onCategoryChange = {
-                        offersViewModel.selectedCategory = it
+                        offersViewModel.setCategoryFilter(it) // ✅ σωστή μέθοδος
                     },
                     onDistanceChange = {
-                        offersViewModel.selectedDistance = it
+                        offersViewModel.setDistanceFilter(it) // ✅ σωστή μέθοδος
                     },
                     onApply = {
-                        offersViewModel.fetchOffers()
+                        offersViewModel.applyFilters() // ✅ άμεση εφαρμογή χωρίς fetch
                         showFilterDialog = false
                     },
                     onReset = {
-                        offersViewModel.selectedCategory = null
-                        offersViewModel.selectedDistance = null
-                        offersViewModel.fetchOffers()
+                        offersViewModel.setCategoryFilter(null)
+                        offersViewModel.setDistanceFilter(null)
                         showFilterDialog = false
                     },
                     onDismiss = { showFilterDialog = false }

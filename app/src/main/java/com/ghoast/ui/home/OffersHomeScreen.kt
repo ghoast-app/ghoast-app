@@ -1,71 +1,80 @@
 package com.ghoast.ui.home
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import com.ghoast.ui.home.OffersViewModel
+import com.ghoast.ui.components.OffersFiltersDialog
 import com.ghoast.ui.session.UserSessionViewModel
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.LaunchedEffect
 
 @Composable
 fun OffersHomeScreen(navController: NavHostController) {
     val viewModel: OffersViewModel = viewModel()
     val offers = viewModel.filteredOffers.collectAsState().value
     val sessionViewModel: UserSessionViewModel = viewModel()
+    val favorites = viewModel.favoriteOfferIds.collectAsState().value
 
-    // ✅ State για την εμφάνιση/απόκρυψη του dropdown menu
     var menuExpanded by remember { mutableStateOf(false) }
+    var showFiltersDialog by remember { mutableStateOf(false) }
 
-    // ✅ Snapshot listener για live ενημέρωση προσφορών
+    // 🔁 Live ενημέρωση
     LaunchedEffect(Unit) {
         viewModel.listenToOffers()
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
 
-        // ✅ TopAppBar με το dynamic menu
+        // ✅ TopAppBar με menu + φίλτρα
         OffersTopBar(
             navController = navController,
             sessionViewModel = sessionViewModel,
-            onMenuExpand = { expanded -> menuExpanded = expanded },
-            onShowHelp = {
-                // TODO: Προσθήκη διαλόγου ή οθόνης βοήθειας
-            },
-            onShowContact = {
-                // TODO: Προσθήκη διαλόγου ή οθόνης επικοινωνίας
-            },
-            menuExpanded = menuExpanded
-        )
-
-        // ✅ Φίλτρα (Κατηγορία / Απόσταση)
-        OffersFiltersSection(
-            selectedCategory = viewModel.selectedCategory,
-            selectedDistance = viewModel.selectedDistance,
-            onCategoryChange = { category ->
-                viewModel.selectedCategory = category
-                viewModel.fetchOffers()
-            },
-            onDistanceChange = { distance ->
-                viewModel.selectedDistance = distance
-                viewModel.fetchOffers()
+            menuExpanded = menuExpanded,
+            onMenuExpand = { menuExpanded = it },
+            onShowHelp = { /* TODO */ },
+            onShowContact = { /* TODO */ },
+            extraActions = {
+                IconButton(onClick = { showFiltersDialog = true }) {
+                    Icon(Icons.Default.FilterList, contentDescription = "Φίλτρα")
+                }
             }
         )
 
-        // ✅ Εδώ θα μπει η λίστα ή ο χάρτης με τις προσφορές
-        val favorites = viewModel.favoriteOfferIds.collectAsState().value
-
+        // ✅ Λίστα προσφορών
         OffersListSection(
             offers = offers,
             favorites = favorites.toList(),
             onToggleFavorite = { viewModel.toggleFavorite(it) },
-            navController = navController // ✅ Εδώ περνάμε τον controller
+            navController = navController
+        )
+    }
+
+    // ✅ Φίλτρα (Dialog)
+    if (showFiltersDialog) {
+        OffersFiltersDialog(
+            selectedCategory = viewModel.selectedCategory,
+            selectedDistance = viewModel.selectedDistance ?: 10,
+            onCategoryChange = {
+                viewModel.setCategoryFilter(it) // ✅ ΝΕΟ
+            },
+            onDistanceChange = {
+                viewModel.setDistanceFilter(it) // ✅ ΝΕΟ
+            },
+            onApply = {
+                showFiltersDialog = false
+            },
+            onReset = {
+                viewModel.setCategoryFilter(null)
+                viewModel.setDistanceFilter(null)
+                showFiltersDialog = false
+            },
+            onDismiss = {
+                showFiltersDialog = false
+            }
         )
     }
 }

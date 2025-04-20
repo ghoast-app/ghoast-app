@@ -78,7 +78,7 @@ fun OfferDetailsScreen(
             Text("Έκπτωση: ${offer!!.discount}", style = MaterialTheme.typography.titleMedium)
             Text(offer!!.description, style = MaterialTheme.typography.bodyMedium)
 
-            Divider()
+            Text("Κατηγορία: ${offer!!.category}", style = MaterialTheme.typography.bodySmall)
 
             Text("Κατάστημα", style = MaterialTheme.typography.titleMedium)
             Text(currentShop.shopName)

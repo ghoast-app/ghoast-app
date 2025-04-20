@@ -1,6 +1,7 @@
 package com.ghoast.ui.home
 
 import android.util.Log
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Place
@@ -13,6 +14,7 @@ import com.ghoast.ui.session.UserType
 import com.ghoast.ui.navigation.Screen // ✅ πρόσθεσε αυτό το import
 
 @OptIn(ExperimentalMaterial3Api::class)
+
 @Composable
 fun OffersTopBar(
     navController: NavHostController,
@@ -20,7 +22,8 @@ fun OffersTopBar(
     onMenuExpand: (Boolean) -> Unit,
     onShowHelp: () -> Unit,
     onShowContact: () -> Unit,
-    menuExpanded: Boolean
+    menuExpanded: Boolean,
+    extraActions: @Composable RowScope.() -> Unit = {} // ✅ ΝΕΟ
 ) {
     val isLoggedIn by sessionViewModel.isLoggedIn.collectAsState()
     val userType by sessionViewModel.userType.collectAsState()
@@ -33,8 +36,11 @@ fun OffersTopBar(
             }
         },
         actions = {
+            // ✅ Προσθήκη εξωτερικών actions (π.χ. κουμπί φίλτρων)
+            extraActions()
+
             IconButton(onClick = {
-                navController.navigate(Screen.OffersMap.route) // ✅ ΕΔΩ έγινε η αλλαγή
+                navController.navigate(Screen.OffersMap.route)
             }) {
                 Icon(Icons.Default.Place, contentDescription = "Χάρτης")
             }
@@ -46,8 +52,6 @@ fun OffersTopBar(
         onDismissRequest = { onMenuExpand(false) }
     ) {
         if (isLoggedIn) {
-            Log.d("TOP_BAR", "userType = $userType, isLoggedIn = $isLoggedIn")
-
             when (userType) {
                 UserType.USER -> {
                     DropdownMenuItem(

@@ -1,3 +1,4 @@
+
 package com.ghoast.ui.map
 
 import android.annotation.SuppressLint
@@ -6,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -15,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.ghoast.model.Offer
+import com.ghoast.model.Shop
 import com.ghoast.ui.home.OffersViewModel
 import com.ghoast.ui.navigation.Screen
 import com.ghoast.util.LocationPermissionHandler
@@ -37,12 +40,9 @@ fun OffersMapScreen(
     offersViewModel: OffersViewModel = viewModel(),
     shopsMapViewModel: ShopsMapViewModel = viewModel()
 ) {
-    Log.d("MapScreen", "🗺️ OffersMapScreen ξεκίνησε")
-
     val context = LocalContext.current
-    val defaultLatLng = LatLng(35.1856, 33.3823) // Λευκωσία
+    val defaultLatLng = LatLng(35.1856, 33.3823)
     var userLatLng by remember { mutableStateOf<LatLng?>(null) }
-
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(defaultLatLng, 10f)
     }
@@ -50,16 +50,12 @@ fun OffersMapScreen(
     val offers = offersViewModel.filteredOffers.collectAsState().value
     val shops = shopsMapViewModel.shops.collectAsState().value
 
-    Log.d("MapScreen", "📍 Προσφορές: ${offers.size}, Καταστήματα: ${shops.size}")
-
     var selectedOffer by remember { mutableStateOf<Offer?>(null) }
     var recenter by remember { mutableStateOf(true) }
+    var showFilterDialog by remember { mutableStateOf(false) }
 
-    // Tabs state
-    var selectedTabIndex by remember { mutableStateOf(0) }
-    val tabTitles = listOf("Προσφορές", "Καταστήματα")
+    var tabIndex by remember { mutableStateOf(0) }
 
-    // Άδεια + GPS
     LocationPermissionHandler(
         onPermissionGranted = {
             LocationSettingsHelper.checkGpsEnabled(context) { gpsEnabled ->
@@ -84,6 +80,9 @@ fun OffersMapScreen(
                 val target = if (location != null) {
                     LatLng(location.latitude, location.longitude).also {
                         userLatLng = it
+                        offersViewModel.userLatitude = it.latitude
+                        offersViewModel.userLongitude = it.longitude
+                        offersViewModel.fetchOffers()
                     }
                 } else {
                     defaultLatLng
@@ -93,9 +92,6 @@ fun OffersMapScreen(
                     update = CameraUpdateFactory.newLatLngZoom(target, 12f),
                     durationMs = 1000
                 )
-
-                Log.d("MapScreen", "🎯 Κάμερα zoom σε: ${target.latitude}, ${target.longitude}")
-
             } catch (e: Exception) {
                 Log.e("MapScreen", "❌ Σφάλμα τοποθεσίας", e)
             } finally {
@@ -108,88 +104,82 @@ fun OffersMapScreen(
         topBar = {
             Column {
                 TopAppBar(
-                    title = { Text("Προσφορές στον Χάρτη") },
+                    title = { Text("Χάρτης") },
                     navigationIcon = {
                         IconButton(onClick = { navController.popBackStack() }) {
                             Icon(Icons.Default.ArrowBack, contentDescription = "Πίσω")
                         }
+                    },
+                    actions = {
+                        IconButton(onClick = { showFilterDialog = true }) {
+                            Icon(Icons.Default.FilterList, contentDescription = "Φίλτρα")
+                        }
                     }
                 )
 
-                TabRow(selectedTabIndex = selectedTabIndex) {
-                    tabTitles.forEachIndexed { index, title ->
-                        Tab(
-                            selected = selectedTabIndex == index,
-                            onClick = {
-                                selectedTabIndex = index
-                                Log.d("MapScreen", "🗂️ Επιλέχθηκε tab: $title")
-                            },
-                            text = { Text(title) }
-                        )
-                    }
+                TabRow(selectedTabIndex = tabIndex) {
+                    Tab(
+                        selected = tabIndex == 0,
+                        onClick = { tabIndex = 0 },
+                        text = { Text("Προσφορές") }
+                    )
+                    Tab(
+                        selected = tabIndex == 1,
+                        onClick = { tabIndex = 1 },
+                        text = { Text("Καταστήματα") }
+                    )
                 }
             }
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = {
-                    recenter = true
-                    Log.d("MapScreen", "📌 Πατήθηκε κουμπί επαναφοράς θέσης")
-                },
+                onClick = { recenter = true },
                 modifier = Modifier.padding(16.dp)
             ) {
                 Text("📍")
             }
         }
     ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
+        Box(modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues)) {
+
             GoogleMap(
                 modifier = Modifier.fillMaxSize(),
                 cameraPositionState = cameraPositionState
             ) {
-                when (selectedTabIndex) {
-                    0 -> {
-                        // 🔴 Προσφορές
-                        offers.forEach { offer ->
-                            val lat = offer.latitude ?: 0.0
-                            val lng = offer.longitude ?: 0.0
+                if (tabIndex == 0) {
+                    offers.forEach { offer ->
+                        val lat = offer.latitude ?: 0.0
+                        val lng = offer.longitude ?: 0.0
 
-                            if (lat != 0.0 && lng != 0.0) {
-                                Marker(
-                                    state = MarkerState(position = LatLng(lat, lng)),
-                                    icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED),
-                                    onClick = {
-                                        selectedOffer = offer
-                                        true
-                                    }
-                                )
-                            }
+                        if (lat != 0.0 && lng != 0.0) {
+                            Marker(
+                                state = MarkerState(position = LatLng(lat, lng)),
+                                icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED),
+                                onClick = {
+                                    selectedOffer = offer
+                                    true
+                                }
+                            )
                         }
                     }
+                } else {
+                    shops.forEach { shop ->
+                        val lat = shop.latitude
+                        val lng = shop.longitude
 
-                    1 -> {
-                        // 🔵 Καταστήματα
-                        shops.forEach { shop ->
-                            val lat = shop.latitude
-                            val lng = shop.longitude
-
-                            if (lat != 0.0 && lng != 0.0) {
-                                Marker(
-                                    state = MarkerState(position = LatLng(lat, lng)),
-                                    icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE),
-                                    title = shop.shopName
-                                )
-                            }
+                        if (lat != 0.0 && lng != 0.0) {
+                            Marker(
+                                state = MarkerState(position = LatLng(lat, lng)),
+                                icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE),
+                                title = shop.shopName
+                            )
                         }
                     }
                 }
             }
 
-            // 📦 Κάρτα προσφοράς
             selectedOffer?.let { offer ->
                 Card(
                     modifier = Modifier
@@ -208,14 +198,40 @@ fun OffersMapScreen(
                             modifier = Modifier
                                 .align(Alignment.End)
                                 .clickable {
-                                    navController.navigate(Screen.OfferDetails.createRoute(offer.id))
-                                    selectedOffer = null
+                                    offer.id.let { id ->
+                                        navController.navigate(Screen.OfferDetails.createRoute(id))
+                                        selectedOffer = null
+                                    }
                                 },
                             color = MaterialTheme.colorScheme.primary,
                             style = MaterialTheme.typography.labelLarge
                         )
                     }
                 }
+            }
+
+            if (showFilterDialog) {
+                MapFiltersDialog(
+                    selectedCategory = offersViewModel.selectedCategory,
+                    selectedDistance = offersViewModel.selectedDistance ?: 10,
+                    onCategoryChange = {
+                        offersViewModel.selectedCategory = it
+                    },
+                    onDistanceChange = {
+                        offersViewModel.selectedDistance = it
+                    },
+                    onApply = {
+                        offersViewModel.fetchOffers()
+                        showFilterDialog = false
+                    },
+                    onReset = {
+                        offersViewModel.selectedCategory = null
+                        offersViewModel.selectedDistance = null
+                        offersViewModel.fetchOffers()
+                        showFilterDialog = false
+                    },
+                    onDismiss = { showFilterDialog = false }
+                )
             }
         }
     }

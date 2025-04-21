@@ -21,6 +21,9 @@ import com.ghoast.ui.shop.AddOfferScreen
 import com.ghoast.ui.shop.EditShopProfileScreen
 import com.ghoast.ui.shop.MyShopOffersScreen
 import com.ghoast.ui.shop.ShopProfileScreen
+import com.ghoast.ui.user.AllShopsScreen
+import com.ghoast.ui.user.FavoriteOffersScreen
+import com.ghoast.ui.user.FavoriteShopsScreen
 import com.ghoast.viewmodel.ShopsMapViewModel
 
 @Composable
@@ -65,6 +68,20 @@ fun GhoastNavGraph(navController: NavHostController) {
         composable(route = Screen.OffersMap.route) {
             OffersMapScreen(navController = navController)
         }
+        composable("favorite_shops") {
+            FavoriteShopsScreen(navController = navController)
+        }
+
+        composable("favorite_offers") {
+            FavoriteOffersScreen(navController = navController)
+        }
+
+
+        composable("all_shops") {
+            AllShopsScreen(navController = navController)
+        }
+
+
     }
 }
 

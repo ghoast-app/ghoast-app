@@ -10,12 +10,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import android.util.Log
 
 class FavoritesViewModel : ViewModel() {
 
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
-    private val userId = auth.currentUser?.uid.orEmpty()
+    private val userId get() = auth.currentUser?.uid.orEmpty()
 
     private val _favoriteOffers = MutableStateFlow<List<Offer>>(emptyList())
     val favoriteOffers: StateFlow<List<Offer>> = _favoriteOffers
@@ -32,8 +33,9 @@ class FavoritesViewModel : ViewModel() {
         viewModelScope.launch {
             val offers = mutableListOf<Offer>()
             try {
-                val snapshot = db.collection("favorites_offers")
-                    .whereEqualTo("userId", userId)
+                val snapshot = db.collection("users")
+                    .document(userId)
+                    .collection("favorite_offers")
                     .get()
                     .await()
 
@@ -53,8 +55,9 @@ class FavoritesViewModel : ViewModel() {
         viewModelScope.launch {
             val shops = mutableListOf<Shop>()
             try {
-                val snapshot = db.collection("favorites_shops")
-                    .whereEqualTo("userId", userId)
+                val snapshot = db.collection("users")
+                    .document(userId)
+                    .collection("favorite_shops")
                     .get()
                     .await()
 
@@ -72,47 +75,55 @@ class FavoritesViewModel : ViewModel() {
 
     fun toggleFavoriteOffer(offerId: String) {
         viewModelScope.launch {
-            val favRef = db.collection("favorites_offers")
-                .whereEqualTo("userId", userId)
+            val favRef = db.collection("users")
+                .document(userId)
+                .collection("favorite_offers")
                 .whereEqualTo("offerId", offerId)
                 .get()
                 .await()
 
             if (favRef.isEmpty) {
-                // Add to favorites
-                db.collection("favorites_offers")
-                    .add(mapOf("userId" to userId, "offerId" to offerId))
-                loadFavoriteOffers()
+                db.collection("users")
+                    .document(userId)
+                    .collection("favorite_offers")
+                    .add(mapOf("offerId" to offerId))
             } else {
-                // Remove from favorites
                 for (doc in favRef.documents) {
-                    db.collection("favorites_offers").document(doc.id).delete()
+                    db.collection("users")
+                        .document(userId)
+                        .collection("favorite_offers")
+                        .document(doc.id)
+                        .delete()
                 }
-                loadFavoriteOffers()
             }
+            loadFavoriteOffers()
         }
     }
 
     fun toggleFavoriteShop(shopId: String) {
         viewModelScope.launch {
-            val favRef = db.collection("favorites_shops")
-                .whereEqualTo("userId", userId)
+            val favRef = db.collection("users")
+                .document(userId)
+                .collection("favorite_shops")
                 .whereEqualTo("shopId", shopId)
                 .get()
                 .await()
 
             if (favRef.isEmpty) {
-                // Add to favorites
-                db.collection("favorites_shops")
-                    .add(mapOf("userId" to userId, "shopId" to shopId))
-                loadFavoriteShops()
+                db.collection("users")
+                    .document(userId)
+                    .collection("favorite_shops")
+                    .add(mapOf("shopId" to shopId))
             } else {
-                // Remove from favorites
                 for (doc in favRef.documents) {
-                    db.collection("favorites_shops").document(doc.id).delete()
+                    db.collection("users")
+                        .document(userId)
+                        .collection("favorite_shops")
+                        .document(doc.id)
+                        .delete()
                 }
-                loadFavoriteShops()
             }
+            loadFavoriteShops()
         }
     }
 }

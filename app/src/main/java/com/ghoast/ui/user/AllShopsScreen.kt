@@ -14,12 +14,14 @@ import androidx.navigation.NavHostController
 import com.ghoast.model.Shop
 import com.ghoast.util.LocationUtils
 import com.ghoast.viewmodel.AllShopsViewModel
+import com.ghoast.viewmodel.FavoritesViewModel
 import com.google.android.gms.location.LocationServices
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AllShopsScreen(navController: NavHostController) {
     val viewModel: AllShopsViewModel = viewModel()
+    val favoritesViewModel: FavoritesViewModel = viewModel()
     val shops by viewModel.shops.collectAsState()
     val favorites by viewModel.favoriteShopIds.collectAsState()
 
@@ -106,10 +108,11 @@ fun AllShopsScreen(navController: NavHostController) {
 
                 ShopCard(
                     shop = shop,
-                    isFavorite = favorites.contains(shop.id),
-                    onToggleFavorite = { viewModel.toggleFavorite(shop.id) },
+                    isFavorite = favoritesViewModel.favoriteShops.collectAsState().value.any { it.id == shop.id },
+                    onToggleFavorite = { favoritesViewModel.toggleFavoriteShop(shop.id) },
                     distanceInKm = distanceInKm
                 )
+
                 Divider()
             }
         }

@@ -60,8 +60,12 @@ fun OffersHomeScreen(navController: NavHostController) {
             sessionViewModel = sessionViewModel,
             menuExpanded = menuExpanded,
             onMenuExpand = { menuExpanded = it },
-            onShowHelp = { /* TODO */ },
-            onShowContact = { /* TODO */ },
+            onShowHelp = {
+                navController.navigate("help")
+            },
+            onShowContact = {
+                navController.navigate("contact") // (ή βάλε εδώ το σωστό route αν δεν το έχεις ακόμα)
+            },
             extraActions = {
                 IconButton(onClick = { showFiltersDialog = true }) {
                     Icon(Icons.Default.FilterList, contentDescription = "Φίλτρα")

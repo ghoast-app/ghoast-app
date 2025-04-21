@@ -8,6 +8,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.ghoast.ui.help.HelpScreen
 import com.ghoast.ui.home.OffersHomeScreen
 import com.ghoast.ui.map.OffersMapScreen
 import com.ghoast.ui.home.OffersViewModel
@@ -24,6 +25,7 @@ import com.ghoast.ui.shop.ShopProfileScreen
 import com.ghoast.ui.user.AllShopsScreen
 import com.ghoast.ui.user.FavoriteOffersScreen
 import com.ghoast.ui.user.FavoriteShopsScreen
+import com.ghoast.ui.user.UserProfileScreen
 import com.ghoast.viewmodel.ShopsMapViewModel
 
 @Composable
@@ -80,6 +82,13 @@ fun GhoastNavGraph(navController: NavHostController) {
         composable("all_shops") {
             AllShopsScreen(navController = navController)
         }
+        composable("user_profile") {
+            UserProfileScreen()
+        }
+
+        composable("help") {
+                    HelpScreen()
+                }
 
 
     }

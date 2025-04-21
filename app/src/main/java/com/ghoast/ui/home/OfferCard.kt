@@ -20,24 +20,31 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import com.ghoast.model.Offer
+import java.text.DecimalFormat
 
 @Composable
 fun OfferCard(
     offer: Offer,
     isFavorite: Boolean,
     onToggleFavorite: () -> Unit,
-    onClick: () -> Unit // ✅ νέο
+    onClick: () -> Unit
 ) {
+    val distanceText = offer.distanceKm?.let {
+        val formatter = DecimalFormat("#.#")
+        "${formatter.format(it)} km"
+    }
+
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() }, // ✅ navigation ενεργοποιείται
+            .clickable { onClick() },
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
 
-            // 🔹 Εικόνα προσφοράς (η πρώτη)
+            // 🔹 Εικόνα προσφοράς
             offer.imageUrls.firstOrNull()?.let { imageUrl ->
                 Image(
                     painter = rememberAsyncImagePainter(imageUrl),
@@ -51,7 +58,7 @@ fun OfferCard(
                 Spacer(modifier = Modifier.height(8.dp))
             }
 
-            // 🔹 Εικόνα καταστήματος + Όνομα + Απόσταση + Καρδιά
+            // 🔹 Πληροφορίες καταστήματος
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
@@ -71,10 +78,11 @@ fun OfferCard(
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(offer.shopName, fontWeight = FontWeight.Bold)
-                    offer.distanceKm?.let {
-                        Text("Απόσταση: ${it}km", style = MaterialTheme.typography.bodySmall)
+                    distanceText?.let {
+                        Text("Απόσταση: $it", style = MaterialTheme.typography.bodySmall)
                     }
                 }
+
 
                 IconButton(onClick = onToggleFavorite) {
                     Icon(

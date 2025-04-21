@@ -44,10 +44,25 @@ class OffersViewModel : ViewModel() {
 
                 val allOffers = snapshot.documents.mapNotNull { doc ->
                     try {
-                        val offer = doc.toObject(Offer::class.java)?.copy(id = doc.id)
-                        offer?.also {
-                            Log.d("OffersViewModel", "✅ Προσφορά: ${it.title} (${it.id}) - Κατηγορία: ${it.category}")
+                        val rawOffer = doc.toObject(Offer::class.java)?.copy(id = doc.id)
+
+                        val updatedOffer = if (
+                            rawOffer != null &&
+                            userLatitude != null && userLongitude != null &&
+                            rawOffer.latitude != null && rawOffer.longitude != null
+                        ) {
+                            val distance = LocationUtils.calculateHaversineDistance(
+                                userLatitude!!, userLongitude!!,
+                                rawOffer.latitude!!, rawOffer.longitude!!
+                            )
+                            Log.d("DISTANCE_DEBUG", "📏 Υπολογισμός απόστασης για ${rawOffer.title}: $distance km")
+
+                            rawOffer.copy(distanceKm = String.format("%.1f", distance).toDouble())
+                        } else {
+                            rawOffer
                         }
+
+                        updatedOffer
                     } catch (e: Exception) {
                         Log.e("OffersViewModel", "❌ Error parsing offer", e)
                         null
@@ -93,13 +108,9 @@ class OffersViewModel : ViewModel() {
             val matchCategory = category == null || offer.category == category
 
             val matchDistance = if (!hasLocation || distance == null) {
-                true // ➕ Αγνοούμε απόσταση αν δεν υπάρχει τοποθεσία ή απόσταση
+                true
             } else {
-                offer.latitude != null && offer.longitude != null &&
-                        LocationUtils.calculateHaversineDistance(
-                            userLatitude!!, userLongitude!!,
-                            offer.latitude!!, offer.longitude!!
-                        ) <= distance
+                offer.distanceKm != null && offer.distanceKm!! <= distance
             }
 
             Log.d("FILTER_DEBUG", "🎯 Offer: ${offer.title}, Category: ${offer.category}, MatchCat: $matchCategory, MatchDist: $matchDistance")

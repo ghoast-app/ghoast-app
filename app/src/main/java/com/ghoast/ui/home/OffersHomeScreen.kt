@@ -1,17 +1,23 @@
 package com.ghoast.ui.home
 
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.ghoast.ui.components.OffersFiltersDialog
 import com.ghoast.ui.session.UserSessionViewModel
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import kotlinx.coroutines.tasks.await
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OffersHomeScreen(navController: NavHostController) {
     val viewModel: OffersViewModel = viewModel()
@@ -22,14 +28,33 @@ fun OffersHomeScreen(navController: NavHostController) {
     var menuExpanded by remember { mutableStateOf(false) }
     var showFiltersDialog by remember { mutableStateOf(false) }
 
-    // 🔁 Live ενημέρωση
+    val context = LocalContext.current
+    val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
+
+    // ✅ ΠΡΩΤΑ τοποθεσία
     LaunchedEffect(Unit) {
-        viewModel.listenToOffers()
+        try {
+            val location = fusedLocationClient
+                .getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
+                .await()
+
+            if (location != null) {
+                viewModel.userLatitude = location.latitude
+                viewModel.userLongitude = location.longitude
+                Log.d("DISTANCE_DEBUG", "📍 Τοποθεσία: ${location.latitude}, ${location.longitude}")
+            } else {
+                Log.e("DISTANCE_DEBUG", "❌ Τοποθεσία null")
+            }
+
+            // ✅ ΜΕΤΑ αρχίζουμε να ακούμε τις προσφορές
+            viewModel.listenToOffers()
+
+        } catch (e: SecurityException) {
+            Log.e("DISTANCE_DEBUG", "❌ Σφάλμα άδειας τοποθεσίας", e)
+        }
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
-
-        // ✅ TopAppBar με menu + φίλτρα
         OffersTopBar(
             navController = navController,
             sessionViewModel = sessionViewModel,
@@ -44,7 +69,6 @@ fun OffersHomeScreen(navController: NavHostController) {
             }
         )
 
-        // ✅ Λίστα προσφορών
         OffersListSection(
             offers = offers,
             favorites = favorites.toList(),
@@ -53,16 +77,15 @@ fun OffersHomeScreen(navController: NavHostController) {
         )
     }
 
-    // ✅ Φίλτρα (Dialog)
     if (showFiltersDialog) {
         OffersFiltersDialog(
             selectedCategory = viewModel.selectedCategory,
             selectedDistance = viewModel.selectedDistance ?: 10,
             onCategoryChange = {
-                viewModel.setCategoryFilter(it) // ✅ ΝΕΟ
+                viewModel.setCategoryFilter(it)
             },
             onDistanceChange = {
-                viewModel.setDistanceFilter(it) // ✅ ΝΕΟ
+                viewModel.setDistanceFilter(it)
             },
             onApply = {
                 showFiltersDialog = false

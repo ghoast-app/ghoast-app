@@ -8,7 +8,7 @@ data class Offer(
     val description: String = "",        // ✅ Περιγραφή
     val category: String = "",           // ✅ Κατηγορία
     val discount: String = "",           // ✅ Ποσοστό έκπτωσης
-    val distanceKm: Int? = null,         // ✅ Απόσταση
+    var distanceKm: Double? = null ,// ✅ Απόσταση
     val isNew: Boolean = false,          // ✅ Σήμανση ΝΕΟ
     val endsSoon: Boolean = false,       // ✅ Σήμανση λήξης
     val shopId: String = "",
@@ -16,5 +16,6 @@ data class Offer(
     val location: String = "",
     val timestamp: Long = 0L,
     val latitude: Double? = null,
-    val longitude: Double? = null
+    val longitude: Double? = null,
+    var distanceFromUser: Double? = null
 )

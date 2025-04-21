@@ -74,6 +74,8 @@ class AddOfferViewModel : ViewModel() {
                 offer["id"] = offerRef.id
                 offerRef.set(offer).await()
 
+                // ✅ Τώρα καλείται σωστά!
+                onSuccess()
 
             } catch (e: Exception) {
                 Log.e("AddOfferViewModel", "❌ Error saving offer", e)

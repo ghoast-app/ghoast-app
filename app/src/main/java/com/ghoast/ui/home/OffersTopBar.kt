@@ -129,10 +129,11 @@ fun OffersTopBar(
             DropdownMenuItem(
                 text = { Text("Επικοινωνία") },
                 onClick = {
-                    onShowContact()
+                    navController.navigate("contact")
                     onMenuExpand(false)
                 }
             )
+
             DropdownMenuItem(
                 text = { Text("Logout") },
                 onClick = {

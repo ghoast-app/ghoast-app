@@ -1,6 +1,10 @@
 package com.ghoast.ui.home
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FilterList
@@ -9,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.ghoast.ui.components.OffersFiltersDialog
@@ -27,30 +32,55 @@ fun OffersHomeScreen(navController: NavHostController) {
 
     var menuExpanded by remember { mutableStateOf(false) }
     var showFiltersDialog by remember { mutableStateOf(false) }
+    var permissionGranted by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
 
-    // ✅ ΠΡΩΤΑ τοποθεσία
+    // ✅ Permission launcher
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        permissionGranted = isGranted
+        if (isGranted) {
+            Log.d("PERMISSION", "✅ Άδεια τοποθεσίας δόθηκε")
+        } else {
+            Log.e("PERMISSION", "❌ Άρνηση άδειας τοποθεσίας")
+        }
+    }
+
+    // ✅ Ελέγχουμε και ζητάμε permission με την εκκίνηση
     LaunchedEffect(Unit) {
-        try {
-            val location = fusedLocationClient
-                .getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
-                .await()
+        val permissionCheck = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        )
+        if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
+            permissionGranted = true
+        } else {
+            locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
+    }
 
-            if (location != null) {
-                viewModel.userLatitude = location.latitude
-                viewModel.userLongitude = location.longitude
-                Log.d("DISTANCE_DEBUG", "📍 Τοποθεσία: ${location.latitude}, ${location.longitude}")
-            } else {
-                Log.e("DISTANCE_DEBUG", "❌ Τοποθεσία null")
+    // ✅ Μόλις πάρουμε permission, παίρνουμε τοποθεσία και ακούμε προσφορές
+    LaunchedEffect(permissionGranted) {
+        if (permissionGranted) {
+            try {
+                val location = fusedLocationClient
+                    .getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
+                    .await()
+
+                if (location != null) {
+                    viewModel.userLatitude = location.latitude
+                    viewModel.userLongitude = location.longitude
+                    Log.d("DISTANCE_DEBUG", "📍 Τοποθεσία: ${location.latitude}, ${location.longitude}")
+                    viewModel.listenToOffers()
+                } else {
+                    Log.e("DISTANCE_DEBUG", "❌ Τοποθεσία null — δεν κάνουμε listenToOffers ακόμα")
+                }
+            } catch (e: SecurityException) {
+                Log.e("DISTANCE_DEBUG", "❌ Σφάλμα άδειας τοποθεσίας", e)
             }
-
-            // ✅ ΜΕΤΑ αρχίζουμε να ακούμε τις προσφορές
-            viewModel.listenToOffers()
-
-        } catch (e: SecurityException) {
-            Log.e("DISTANCE_DEBUG", "❌ Σφάλμα άδειας τοποθεσίας", e)
         }
     }
 
@@ -64,7 +94,7 @@ fun OffersHomeScreen(navController: NavHostController) {
                 navController.navigate("help")
             },
             onShowContact = {
-                navController.navigate("contact") // (ή βάλε εδώ το σωστό route αν δεν το έχεις ακόμα)
+                navController.navigate("contact")
             },
             extraActions = {
                 IconButton(onClick = { showFiltersDialog = true }) {

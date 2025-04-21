@@ -8,6 +8,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.ghoast.ui.contact.ContactScreen
 import com.ghoast.ui.help.HelpScreen
 import com.ghoast.ui.home.OffersHomeScreen
 import com.ghoast.ui.map.OffersMapScreen
@@ -88,6 +89,11 @@ fun GhoastNavGraph(navController: NavHostController) {
 
         composable("help") {
                     HelpScreen()
+                }
+
+
+        composable("contact") {
+                    ContactScreen()
                 }
 
 

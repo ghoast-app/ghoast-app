@@ -15,6 +15,7 @@ import com.ghoast.ui.map.OffersMapScreen
 import com.ghoast.ui.home.OffersViewModel
 import com.ghoast.ui.login.LoginScreen
 import com.ghoast.ui.map.OffersMapScreen
+import com.ghoast.ui.notifications.UserNotificationsScreen
 import com.ghoast.ui.register.RegisterUserScreen
 import com.ghoast.ui.register.RegisterShopScreen
 import com.ghoast.ui.offers.EditOfferScreen
@@ -95,6 +96,9 @@ fun GhoastNavGraph(navController: NavHostController) {
         composable("contact") {
                     ContactScreen()
                 }
+        composable("notifications") {
+            UserNotificationsScreen()
+        }
 
 
     }

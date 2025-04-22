@@ -17,26 +17,64 @@ export const sendNotificationOnNewOffer = onDocumentCreated("offers/{offerId}", 
 
   for (const userDoc of usersSnapshot.docs) {
     const userId = userDoc.id;
-    const favoriteShopsSnapshot = await db.collection("users").doc(userId).collection("favorite_shops").get();
 
-    const hasFavorited = favoriteShopsSnapshot.docs.some(doc => doc.data().shopId === shopId);
+    // ✅ Ελέγχουμε αν έχει στα αγαπημένα το κατάστημα
+    const favoriteShopsSnapshot = await db
+      .collection("users")
+      .doc(userId)
+      .collection("favorite_shops")
+      .get();
+
+    const hasFavorited = favoriteShopsSnapshot.docs.some(
+      doc => doc.data().shopId === shopId
+    );
+
     if (hasFavorited) {
-      const fcmToken = userDoc.data().fcmToken;
+      const userData = userDoc.data();
+      const fcmToken = userData.fcmToken;
+
       if (fcmToken) {
-        tokens.push(fcmToken);
+        tokens.push({ token: fcmToken, userId });
       }
     }
   }
 
   if (tokens.length > 0) {
-    await getMessaging().sendEachForMulticast({
-      tokens,
-      notification: {
-        title: `🛍️ Νέα προσφορά από το ${offer.shopName}`,
-        body: offer.title,
-      },
-    });
-    console.log(`✅ Στάλθηκε notification σε ${tokens.length} χρήστες.`);
+    // ✅ Στέλνουμε ειδοποίηση με data-only payload
+    const responses = await Promise.all(tokens.map(({ token, userId }) => {
+      const payload = {
+        token,
+        data: {
+          title: `Νέα προσφορά από το ${offer.shopName}`,
+          body: offer.title,
+          shopId: shopId,
+          offerId: offer.id || "", // αν έχει id
+        },
+      };
+
+      // ✅ Αποθήκευση στο Firestore για να εμφανίζεται στο app
+      const notificationRef = db
+        .collection("users")
+        .doc(userId)
+        .collection("notifications")
+        .doc();
+
+      const notificationData = {
+        id: notificationRef.id,
+        title: payload.data.title,
+        body: payload.data.body,
+        offerId: payload.data.offerId,
+        shopId: payload.data.shopId,
+        timestamp: Date.now(),
+      };
+
+      return Promise.all([
+        getMessaging().send(payload),
+        notificationRef.set(notificationData),
+      ]);
+    }));
+
+    console.log(`✅ Στάλθηκαν ${responses.length} ειδοποιήσεις.`);
   } else {
     console.log("⚠️ Κανένας χρήστης δεν είχε αποθηκευμένο αυτό το κατάστημα στα αγαπημένα.");
   }

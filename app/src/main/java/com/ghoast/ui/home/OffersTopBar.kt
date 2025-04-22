@@ -11,10 +11,9 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import com.ghoast.ui.session.UserSessionViewModel
 import com.ghoast.ui.session.UserType
-import com.ghoast.ui.navigation.Screen // ✅ πρόσθεσε αυτό το import
+import com.ghoast.ui.navigation.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
-
 @Composable
 fun OffersTopBar(
     navController: NavHostController,
@@ -23,7 +22,7 @@ fun OffersTopBar(
     onShowHelp: () -> Unit,
     onShowContact: () -> Unit,
     menuExpanded: Boolean,
-    extraActions: @Composable RowScope.() -> Unit = {} // ✅ ΝΕΟ
+    extraActions: @Composable RowScope.() -> Unit = {}
 ) {
     val isLoggedIn by sessionViewModel.isLoggedIn.collectAsState()
     val userType by sessionViewModel.userType.collectAsState()
@@ -36,9 +35,7 @@ fun OffersTopBar(
             }
         },
         actions = {
-            // ✅ Προσθήκη εξωτερικών actions (π.χ. κουμπί φίλτρων)
             extraActions()
-
             IconButton(onClick = {
                 navController.navigate(Screen.OffersMap.route)
             }) {
@@ -79,6 +76,14 @@ fun OffersTopBar(
                         text = { Text("Το προφίλ μου") },
                         onClick = {
                             navController.navigate(Screen.UserProfile.route)
+                            onMenuExpand(false)
+                        }
+                    )
+                    // ✅ Προσθήκη Ειδοποιήσεων μόνο για Users
+                    DropdownMenuItem(
+                        text = { Text("🔔 Ειδοποιήσεις") },
+                        onClick = {
+                            navController.navigate("notifications")
                             onMenuExpand(false)
                         }
                     )
@@ -129,7 +134,7 @@ fun OffersTopBar(
             DropdownMenuItem(
                 text = { Text("Επικοινωνία") },
                 onClick = {
-                    navController.navigate("contact")
+                    onShowContact()
                     onMenuExpand(false)
                 }
             )

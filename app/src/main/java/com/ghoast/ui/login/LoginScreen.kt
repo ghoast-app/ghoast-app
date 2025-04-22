@@ -12,7 +12,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.google.firebase.auth.FirebaseAuth
 import com.ghoast.ui.navigation.Screen
-
+import com.ghoast.utils.FCMTokenUtils // ✅ import for FCM update
 
 @Composable
 fun LoginScreen(navController: NavHostController) {
@@ -60,18 +60,21 @@ fun LoginScreen(navController: NavHostController) {
                     auth.signInWithEmailAndPassword(email, password)
                         .addOnCompleteListener { task ->
                             if (task.isSuccessful) {
-                                Toast.makeText(context, "Login successful", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "✅ Είσοδος επιτυχής", Toast.LENGTH_SHORT).show()
+
+                                // ✅ Ενημέρωση FCM Token στο Firestore
+                                FCMTokenUtils.updateFCMToken()
 
                                 navController.navigate(Screen.OffersHome.route) {
                                     popUpTo(Screen.Login.route) { inclusive = true }
                                 }
 
                             } else {
-                                Toast.makeText(context, "Login failed: ${task.exception?.message}", Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, "❌ Αποτυχία σύνδεσης: ${task.exception?.message}", Toast.LENGTH_LONG).show()
                             }
                         }
                 } else {
-                    Toast.makeText(context, "Please enter email and password", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Συμπληρώστε email και κωδικό", Toast.LENGTH_SHORT).show()
                 }
             },
             modifier = Modifier.fillMaxWidth()
@@ -84,13 +87,13 @@ fun LoginScreen(navController: NavHostController) {
         TextButton(onClick = {
             navController.navigate(Screen.RegisterUser.route)
         }) {
-            Text("Don't have an account? Register as User")
+            Text("Δεν έχετε λογαριασμό; Εγγραφή Χρήστη")
         }
 
         TextButton(onClick = {
             navController.navigate(Screen.RegisterShop.route)
         }) {
-            Text("Register as Shop")
+            Text("Εγγραφή Καταστήματος")
         }
     }
 }

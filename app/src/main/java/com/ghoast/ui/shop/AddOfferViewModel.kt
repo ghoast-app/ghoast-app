@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.ghoast.model.Shop
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.functions.FirebaseFunctions
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -19,6 +20,7 @@ class AddOfferViewModel : ViewModel() {
     private val db = FirebaseFirestore.getInstance()
     private val storage = FirebaseStorage.getInstance()
     private val auth = FirebaseAuth.getInstance()
+    private val functions = FirebaseFunctions.getInstance()
 
     fun saveOffer(
         title: String,
@@ -74,7 +76,9 @@ class AddOfferViewModel : ViewModel() {
                 offer["id"] = offerRef.id
                 offerRef.set(offer).await()
 
-                // ✅ Τώρα καλείται σωστά!
+                // 🔔 4. Κλήση Cloud Function για αποστολή ειδοποίησης
+                callSendNotificationFunction(shopId, shopName, title)
+
                 onSuccess()
 
             } catch (e: Exception) {
@@ -82,6 +86,24 @@ class AddOfferViewModel : ViewModel() {
                 onError(e)
             }
         }
+    }
+
+    private fun callSendNotificationFunction(shopId: String, shopName: String, offerTitle: String) {
+        val data = hashMapOf(
+            "shopId" to shopId,
+            "shopName" to shopName,
+            "offerTitle" to offerTitle
+        )
+
+        functions
+            .getHttpsCallable("sendNotificationOnNewOffer")
+            .call(data)
+            .addOnSuccessListener {
+                Log.d("CloudFunction", "✅ Notification function called successfully")
+            }
+            .addOnFailureListener { e ->
+                Log.e("CloudFunction", "❌ Failed to call notification function", e)
+            }
     }
 
     private suspend fun uploadImages(imageUris: List<Uri>): List<String> = withContext(Dispatchers.IO) {

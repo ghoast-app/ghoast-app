@@ -2,6 +2,7 @@ package com.ghoast.ui.home
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.os.Build
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -32,39 +33,73 @@ fun OffersHomeScreen(navController: NavHostController) {
 
     var menuExpanded by remember { mutableStateOf(false) }
     var showFiltersDialog by remember { mutableStateOf(false) }
-    var permissionGranted by remember { mutableStateOf(false) }
+    var notificationPermissionAsked by remember { mutableStateOf(false) }
+    var locationPermissionAsked by remember { mutableStateOf(false) }
+    var notificationPermissionGranted by remember { mutableStateOf(false) }
+    var locationPermissionGranted by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
 
-    // ✅ Permission launcher
+    // 🔹 Notification permission (Android 13+)
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        notificationPermissionGranted = granted
+        Log.d("PERMISSION", if (granted) "✅ Άδεια ειδοποιήσεων δόθηκε" else "❌ Άρνηση ειδοποιήσεων")
+        notificationPermissionAsked = true
+    }
+
+    // 🔹 Location permission
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        permissionGranted = isGranted
-        if (isGranted) {
-            Log.d("PERMISSION", "✅ Άδεια τοποθεσίας δόθηκε")
-        } else {
-            Log.e("PERMISSION", "❌ Άρνηση άδειας τοποθεσίας")
-        }
+    ) { granted ->
+        locationPermissionGranted = granted
+        Log.d("PERMISSION", if (granted) "✅ Άδεια τοποθεσίας δόθηκε" else "❌ Άρνηση άδειας τοποθεσίας")
+        locationPermissionAsked = true
     }
 
-    // ✅ Ελέγχουμε και ζητάμε permission με την εκκίνηση
+    // ✅ Ελέγχουμε άδειες στην αρχή
     LaunchedEffect(Unit) {
-        val permissionCheck = ContextCompat.checkSelfPermission(
-            context,
-            Manifest.permission.ACCESS_FINE_LOCATION
-        )
-        if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
-            permissionGranted = true
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val hasNotification = ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+
+            if (!hasNotification) {
+                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            } else {
+                notificationPermissionGranted = true
+                notificationPermissionAsked = true
+                Log.d("PERMISSION", "✅ Άδεια ειδοποιήσεων ήδη δοσμένη")
+            }
         } else {
-            locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+            notificationPermissionAsked = true // δεν χρειάζεται άδεια κάτω από Android 13
         }
     }
 
-    // ✅ Μόλις πάρουμε permission, παίρνουμε τοποθεσία και ακούμε προσφορές
-    LaunchedEffect(permissionGranted) {
-        if (permissionGranted) {
+    // ✅ Ζητάμε location μόλις τελειώσει με notification
+    LaunchedEffect(notificationPermissionAsked) {
+        if (notificationPermissionAsked) {
+            val hasLocation = ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+
+            if (!hasLocation) {
+                locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+            } else {
+                locationPermissionGranted = true
+                locationPermissionAsked = true
+                Log.d("PERMISSION", "✅ Άδεια τοποθεσίας ήδη δοσμένη")
+            }
+        }
+    }
+
+    // ✅ Παίρνουμε τοποθεσία και ακούμε προσφορές όταν έχουμε άδεια
+    LaunchedEffect(locationPermissionGranted) {
+        if (locationPermissionGranted) {
             try {
                 val location = fusedLocationClient
                     .getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)

@@ -1,7 +1,5 @@
-package com.ghoast.ui.register
+package com.ghoast.ui.shop
 
-import android.app.Activity
-import android.app.TimePickerDialog
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -21,33 +19,30 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavHostController
+import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.ghoast.model.WorkingHour
-import com.ghoast.ui.navigation.Screen
+import com.ghoast.ui.register.RegisterShopViewModel
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.widget.Autocomplete
 import com.google.android.libraries.places.widget.model.AutocompleteActivityMode
-import java.util.Calendar
+import java.util.*
+import android.app.TimePickerDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RegisterShopScreen(navController: NavHostController) {
+fun AddNewShopScreen(navController: NavController) {
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
     val viewModel: RegisterShopViewModel = viewModel()
 
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
     var shopName by remember { mutableStateOf("") }
     var address by remember { mutableStateOf("") }
     var latLng by remember { mutableStateOf<LatLng?>(null) }
@@ -71,44 +66,21 @@ fun RegisterShopScreen(navController: NavHostController) {
     }
 
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
             val place = Autocomplete.getPlaceFromIntent(result.data!!)
             address = place.address ?: ""
             latLng = place.latLng
         }
     }
 
-    var isLoading by remember { mutableStateOf(false) }
-    val scrollState = rememberScrollState()
-
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(scrollState)
+            .verticalScroll(rememberScrollState())
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Spacer(modifier = Modifier.height(32.dp))
-        Text("Εγγραφή Καταστήματος", style = MaterialTheme.typography.headlineSmall)
-
-        OutlinedTextField(
-            value = email,
-            onValueChange = { email = it },
-            label = { Text("Email") },
-            modifier = Modifier.fillMaxWidth(),
-            keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next),
-            keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
-        )
-
-        OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
-            label = { Text("Password") },
-            modifier = Modifier.fillMaxWidth(),
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next),
-            keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
-        )
+        Text("➕ Νέο Κατάστημα", style = MaterialTheme.typography.headlineSmall)
 
         OutlinedTextField(
             value = shopName,
@@ -116,7 +88,7 @@ fun RegisterShopScreen(navController: NavHostController) {
             label = { Text("Όνομα Καταστήματος") },
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next),
-            keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
+            keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(androidx.compose.ui.focus.FocusDirection.Down) })
         )
 
         Button(onClick = {
@@ -135,7 +107,7 @@ fun RegisterShopScreen(navController: NavHostController) {
             label = { Text("Ιστοσελίδα") },
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next),
-            keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
+            keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(androidx.compose.ui.focus.FocusDirection.Down) })
         )
 
         OutlinedTextField(
@@ -239,13 +211,12 @@ fun RegisterShopScreen(navController: NavHostController) {
 
         Button(
             onClick = {
-                isLoading = true
                 viewModel.registerShop(
                     shopName = shopName,
                     address = address,
                     phone = phone,
                     website = website,
-                    email = email,
+                    email = "", // προαιρετικό
                     category = selectedCategories.joinToString(", "),
                     workingHours = workingHours.map {
                         mapOf(
@@ -258,24 +229,17 @@ fun RegisterShopScreen(navController: NavHostController) {
                     latitude = latLng?.latitude ?: 0.0,
                     longitude = latLng?.longitude ?: 0.0,
                     onSuccess = {
-                        isLoading = false
-                        Toast.makeText(context, "Εγγραφή επιτυχής!", Toast.LENGTH_LONG).show()
-                        navController.navigate(Screen.Login.route) {
-                            popUpTo(Screen.RegisterShop.route) { inclusive = true }
-                        }
+                        Toast.makeText(context, "Το νέο κατάστημα προστέθηκε!", Toast.LENGTH_LONG).show()
+                        navController.popBackStack()
                     },
                     onError = {
-                        isLoading = false
                         Toast.makeText(context, "Σφάλμα: ${it.message}", Toast.LENGTH_LONG).show()
                     }
                 )
-
-
             },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !isLoading
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Text(if (isLoading) "Παρακαλώ περιμένετε..." else "Εγγραφή")
+            Text("Καταχώρηση Καταστήματος")
         }
     }
 }

@@ -30,12 +30,23 @@ fun AddOfferScreen(navController: NavController) {
     val viewModel: AddOfferViewModel = viewModel()
     val scope = rememberCoroutineScope()
 
+    // 🔽 Επιστροφή από το ViewModel
+    val myShops = viewModel.myShops
+    val selectedShop by viewModel.selectedShop
+
+    // 🔽 Ενεργοποίηση όταν ανοίξει το composable
+    LaunchedEffect(Unit) {
+        viewModel.loadMyShops()
+    }
+
     var title by remember { mutableStateOf(TextFieldValue("")) }
     var description by remember { mutableStateOf(TextFieldValue("")) }
     var selectedDiscount by remember { mutableStateOf<String?>(null) }
     var discountDropdownExpanded by remember { mutableStateOf(false) }
     var selectedCategory by remember { mutableStateOf<String?>(null) }
     var categoryDropdownExpanded by remember { mutableStateOf(false) }
+    var shopDropdownExpanded by remember { mutableStateOf(false) }
+
     var imageUris = remember { mutableStateListOf<Uri>() }
     var showSuccessDialog by remember { mutableStateOf(false) }
 
@@ -68,6 +79,36 @@ fun AddOfferScreen(navController: NavController) {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text("➕ Προσθήκη Προσφοράς", style = MaterialTheme.typography.headlineSmall)
+
+            // 🔽 Επιλογή καταστήματος
+            ExposedDropdownMenuBox(
+                expanded = shopDropdownExpanded,
+                onExpandedChange = { shopDropdownExpanded = !shopDropdownExpanded }
+            ) {
+                TextField(
+                    value = selectedShop?.shopName ?: "Επιλέξτε κατάστημα",
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Κατάστημα") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = shopDropdownExpanded) },
+                    modifier = Modifier.menuAnchor().fillMaxWidth()
+                )
+
+                ExposedDropdownMenu(
+                    expanded = shopDropdownExpanded,
+                    onDismissRequest = { shopDropdownExpanded = false }
+                ) {
+                    myShops.forEach { shop ->
+                        DropdownMenuItem(
+                            text = { Text(shop.shopName) },
+                            onClick = {
+                                viewModel.selectedShop.value = shop
+                                shopDropdownExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
 
             OutlinedTextField(
                 value = title,
@@ -184,9 +225,9 @@ fun AddOfferScreen(navController: NavController) {
                 onClick = {
                     if (title.text.isBlank() || description.text.isBlank() ||
                         selectedDiscount.isNullOrBlank() || selectedCategory.isNullOrBlank() ||
-                        imageUris.isEmpty()
+                        imageUris.isEmpty() || selectedShop == null
                     ) {
-                        Toast.makeText(context, "Συμπληρώστε όλα τα πεδία και επιλέξτε εικόνες.", Toast.LENGTH_LONG).show()
+                        Toast.makeText(context, "Συμπληρώστε όλα τα πεδία.", Toast.LENGTH_LONG).show()
                         return@Button
                     }
 
@@ -212,7 +253,6 @@ fun AddOfferScreen(navController: NavController) {
             }
         }
 
-        // ✅ Επιβεβαίωση με AlertDialog
         if (showSuccessDialog) {
             AlertDialog(
                 onDismissRequest = {

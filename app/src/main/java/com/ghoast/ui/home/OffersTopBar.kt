@@ -79,7 +79,6 @@ fun OffersTopBar(
                             onMenuExpand(false)
                         }
                     )
-                    // ✅ Προσθήκη Ειδοποιήσεων μόνο για Users
                     DropdownMenuItem(
                         text = { Text("🔔 Ειδοποιήσεις") },
                         onClick = {
@@ -94,6 +93,13 @@ fun OffersTopBar(
                         text = { Text("➕ Προσθήκη Προσφοράς") },
                         onClick = {
                             navController.navigate(Screen.AddOffer.route)
+                            onMenuExpand(false)
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("➕ Νέο Κατάστημα") },
+                        onClick = {
+                            navController.navigate(Screen.AddNewShop.route)
                             onMenuExpand(false)
                         }
                     )

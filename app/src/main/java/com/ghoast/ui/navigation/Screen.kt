@@ -16,7 +16,7 @@ sealed class Screen(val route: String) {
     object ShopProfile : Screen("shop_profile")
     object EditOffer : Screen("edit_offer")
     object EditShopProfile : Screen("edit_shop_profile")
-
+    object AddNewShop : Screen("add_new_shop")
     // Register
     object RegisterUser : Screen("register_user")
     object RegisterShop : Screen("register_shop")

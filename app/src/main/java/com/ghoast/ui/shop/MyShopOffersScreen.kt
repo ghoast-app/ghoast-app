@@ -4,6 +4,7 @@ import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -15,6 +16,7 @@ import androidx.navigation.NavHostController
 import com.ghoast.model.Offer
 import com.ghoast.ui.navigation.Screen
 import com.ghoast.viewmodel.MyShopOffersViewModel
+import androidx.compose.material.icons.filled.Add
 
 @Composable
 fun MyShopOffersScreen(navController: NavHostController) {
@@ -24,67 +26,80 @@ fun MyShopOffersScreen(navController: NavHostController) {
     val errorMessage by viewModel.errorMessage.collectAsState()
     val context = LocalContext.current
 
-    // 🔔 Διαχείριση διαλόγου διαγραφής
     var showDeleteDialog by remember { mutableStateOf(false) }
     var selectedOfferId by remember { mutableStateOf<String?>(null) }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        when {
-            isLoading -> {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = {
+                    navController.navigate(Screen.AddNewShop.route)
+                }
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Νέο Κατάστημα")
             }
+        }
+    ) { paddingValues ->
+        Box(modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues)) {
 
-            errorMessage != null -> {
-                Text(
-                    text = errorMessage ?: "Κάτι πήγε στραβά.",
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            }
+            when {
+                isLoading -> {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                }
 
-            else -> {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(offers) { offer ->
-                        OfferItem(
-                            offer = offer,
-                            onEditClick = {
-                                navController.navigate(Screen.EditOffer.route + "/${offer.id}")
+                errorMessage != null -> {
+                    Text(
+                        text = errorMessage ?: "Κάτι πήγε στραβά.",
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
+
+                else -> {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(offers) { offer ->
+                            OfferItem(
+                                offer = offer,
+                                onEditClick = {
+                                    navController.navigate(Screen.EditOffer.route + "/${offer.id}")
+                                },
+                                onDeleteClick = {
+                                    selectedOfferId = offer.id
+                                    showDeleteDialog = true
+                                }
+                            )
+                        }
+                    }
+
+                    if (showDeleteDialog && selectedOfferId != null) {
+                        AlertDialog(
+                            onDismissRequest = { showDeleteDialog = false },
+                            title = { Text("Επιβεβαίωση διαγραφής") },
+                            text = { Text("Είστε σίγουροι ότι θέλετε να διαγράψετε αυτή την προσφορά;") },
+                            confirmButton = {
+                                TextButton(onClick = {
+                                    viewModel.deleteOffer(selectedOfferId!!) {
+                                        Toast.makeText(context, "Η προσφορά διαγράφηκε", Toast.LENGTH_SHORT).show()
+                                    }
+                                    showDeleteDialog = false
+                                }) {
+                                    Text("Ναι")
+                                }
                             },
-                            onDeleteClick = {
-                                selectedOfferId = offer.id
-                                showDeleteDialog = true
+                            dismissButton = {
+                                TextButton(onClick = { showDeleteDialog = false }) {
+                                    Text("Άκυρο")
+                                }
                             }
                         )
                     }
-                }
-
-                // 🧨 AlertDialog για επιβεβαίωση διαγραφής
-                if (showDeleteDialog && selectedOfferId != null) {
-                    AlertDialog(
-                        onDismissRequest = { showDeleteDialog = false },
-                        title = { Text("Επιβεβαίωση διαγραφής") },
-                        text = { Text("Είστε σίγουροι ότι θέλετε να διαγράψετε αυτή την προσφορά;") },
-                        confirmButton = {
-                            TextButton(onClick = {
-                                viewModel.deleteOffer(selectedOfferId!!) {
-                                    Toast.makeText(context, "Η προσφορά διαγράφηκε", Toast.LENGTH_SHORT).show()
-                                }
-                                showDeleteDialog = false
-                            }) {
-                                Text("Ναι")
-                            }
-                        },
-                        dismissButton = {
-                            TextButton(onClick = { showDeleteDialog = false }) {
-                                Text("Άκυρο")
-                            }
-                        }
-                    )
                 }
             }
         }

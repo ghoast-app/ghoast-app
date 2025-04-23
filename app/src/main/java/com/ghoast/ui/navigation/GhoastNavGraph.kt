@@ -20,6 +20,7 @@ import com.ghoast.ui.register.RegisterUserScreen
 import com.ghoast.ui.register.RegisterShopScreen
 import com.ghoast.ui.offers.EditOfferScreen
 import com.ghoast.ui.offers.OfferDetailsScreen
+import com.ghoast.ui.shop.AddNewShopScreen
 import com.ghoast.ui.shop.AddOfferScreen
 import com.ghoast.ui.shop.EditShopProfileScreen
 import com.ghoast.ui.shop.MyShopOffersScreen
@@ -98,6 +99,9 @@ fun GhoastNavGraph(navController: NavHostController) {
                 }
         composable("notifications") {
             UserNotificationsScreen()
+        }
+        composable(route = Screen.AddNewShop.route) {
+            AddNewShopScreen(navController = navController)
         }
 
 

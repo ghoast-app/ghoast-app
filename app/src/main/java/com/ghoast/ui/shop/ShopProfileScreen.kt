@@ -62,7 +62,7 @@ fun ShopProfileScreen(
         }
 
         Text("Όνομα: ${shop?.shopName}", style = MaterialTheme.typography.titleLarge)
-        Text("Κατηγορία: ${shop?.categories}")
+        Text("Κατηγορία: ${shop?.categories?.joinToString()}")
         Text("Διεύθυνση: ${shop?.address}")
         Text("Τηλέφωνο: ${shop?.phone}")
         Text("Ιστοσελίδα: ${shop?.website}")
@@ -84,6 +84,15 @@ fun ShopProfileScreen(
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("✏ Επεξεργασία Προφίλ")
+        }
+
+        Button(
+            onClick = {
+                navController.navigate(Screen.MyShops.route)
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("🏪 Διαχείριση Καταστημάτων")
         }
     }
 }

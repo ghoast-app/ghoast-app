@@ -26,7 +26,7 @@ class EditOfferViewModel : ViewModel() {
         isLoading.value = true
         db.collection("offers").document(offerId).get()
             .addOnSuccessListener { snapshot ->
-                _offer.value = snapshot.toObject(Offer::class.java)
+                _offer.value = snapshot.toObject(Offer::class.java)?.copy(id = snapshot.id)
                 isLoading.value = false
             }
             .addOnFailureListener {
@@ -67,7 +67,7 @@ class EditOfferViewModel : ViewModel() {
             val urls = mutableListOf<String>()
             val total = uris.size
 
-            uris.forEachIndexed { _, uri ->
+            uris.forEach { uri ->
                 val fileName = UUID.randomUUID().toString()
                 val ref = storage.reference.child("offer_images/$fileName")
 

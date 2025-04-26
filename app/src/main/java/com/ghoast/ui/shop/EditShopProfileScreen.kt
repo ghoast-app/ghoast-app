@@ -18,6 +18,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
 import com.ghoast.model.WorkingHour
 import com.ghoast.viewmodel.EditShopProfileViewModel
@@ -31,6 +32,8 @@ import java.util.*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditShopProfileScreen(
+    navController: NavHostController,
+    shopId: String? = null,
     viewModel: EditShopProfileViewModel = viewModel(),
     onSaveSuccess: () -> Unit = {}
 ) {
@@ -46,6 +49,10 @@ fun EditShopProfileScreen(
     var address by remember { mutableStateOf("") }
     var latitude by remember { mutableStateOf(0.0) }
     var longitude by remember { mutableStateOf(0.0) }
+
+    LaunchedEffect(shopId) {
+        viewModel.loadShopById(shopId)
+    }
 
     LaunchedEffect(shop) {
         shopName = shop?.shopName ?: ""
@@ -200,8 +207,7 @@ fun EditShopProfileScreen(
                         defaultHours[index] = defaultHours[index].copy(from = selectedTime)
                     }, cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), true).show()
                 }) {
-                    Text("Από: ${hour.from.orEmpty().ifEmpty { "--:--" }}")
-
+                    Text(text = "Από: ${hour.from.orEmpty().ifEmpty { "--:--" }}")
                 }
                 Spacer(modifier = Modifier.width(4.dp))
                 Button(onClick = {
@@ -225,12 +231,12 @@ fun EditShopProfileScreen(
 
                 val saveToFirestore: (String) -> Unit = { imageUrl ->
                     viewModel.updateShopProfile(
+                        shopId,
                         shopName, shopCategory, phone, email, website,
                         address, imageUrl, defaultHours, latitude, longitude
                     ) {
                         isUploading = false
                         showSavedDialog = true
-                        onSaveSuccess()
                     }
                 }
 
@@ -255,7 +261,10 @@ fun EditShopProfileScreen(
         AlertDialog(
             onDismissRequest = { showSavedDialog = false },
             confirmButton = {
-                TextButton(onClick = { showSavedDialog = false }) {
+                TextButton(onClick = {
+                    showSavedDialog = false
+                    navController.popBackStack()
+                }) {
                     Text("ΟΚ")
                 }
             },

@@ -10,7 +10,6 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.ghoast.model.Offer
 import com.ghoast.ui.navigation.Screen
-
 @Composable
 fun OffersListSection(
     offers: List<Offer>,

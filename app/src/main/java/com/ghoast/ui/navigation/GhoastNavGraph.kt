@@ -1,8 +1,6 @@
 package com.ghoast.ui.navigation
 
-import android.util.Log
 import androidx.compose.runtime.Composable
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -11,25 +9,15 @@ import androidx.navigation.navArgument
 import com.ghoast.ui.contact.ContactScreen
 import com.ghoast.ui.help.HelpScreen
 import com.ghoast.ui.home.OffersHomeScreen
-import com.ghoast.ui.map.OffersMapScreen
-import com.ghoast.ui.home.OffersViewModel
 import com.ghoast.ui.login.LoginScreen
 import com.ghoast.ui.map.OffersMapScreen
 import com.ghoast.ui.notifications.UserNotificationsScreen
-import com.ghoast.ui.register.RegisterUserScreen
-import com.ghoast.ui.register.RegisterShopScreen
 import com.ghoast.ui.offers.EditOfferScreen
 import com.ghoast.ui.offers.OfferDetailsScreen
-import com.ghoast.ui.shop.AddNewShopScreen
-import com.ghoast.ui.shop.AddOfferScreen
-import com.ghoast.ui.shop.EditShopProfileScreen
-import com.ghoast.ui.shop.MyShopOffersScreen
-import com.ghoast.ui.shop.ShopProfileScreen
-import com.ghoast.ui.user.AllShopsScreen
-import com.ghoast.ui.user.FavoriteOffersScreen
-import com.ghoast.ui.user.FavoriteShopsScreen
-import com.ghoast.ui.user.UserProfileScreen
-import com.ghoast.viewmodel.ShopsMapViewModel
+import com.ghoast.ui.register.RegisterShopScreen
+import com.ghoast.ui.register.RegisterUserScreen
+import com.ghoast.ui.shop.*
+import com.ghoast.ui.user.*
 
 @Composable
 fun GhoastNavGraph(navController: NavHostController) {
@@ -37,30 +25,26 @@ fun GhoastNavGraph(navController: NavHostController) {
         navController = navController,
         startDestination = Screen.OffersHome.route
     ) {
-        composable(Screen.Login.route) {
-            LoginScreen(navController)
-        }
-        composable(Screen.RegisterUser.route) {
-            RegisterUserScreen(navController)
-        }
-        composable(Screen.RegisterShop.route) {
-            RegisterShopScreen(navController)
-        }
-        composable(Screen.OffersHome.route) {
-            OffersHomeScreen(navController)
-        }
-        composable(Screen.AddOffer.route) {
-            AddOfferScreen(navController)
-        }
-        composable(Screen.MyShopOffers.route) {
-            MyShopOffersScreen(navController)
-        }
-        composable(Screen.ShopProfile.route) {
-            ShopProfileScreen(navController)
-        }
+        composable(Screen.Login.route) { LoginScreen(navController) }
+        composable(Screen.RegisterUser.route) { RegisterUserScreen(navController) }
+        composable(Screen.RegisterShop.route) { RegisterShopScreen(navController) }
+        composable(Screen.OffersHome.route) { OffersHomeScreen(navController) }
+        composable(Screen.AddOffer.route) { AddOfferScreen(navController) }
+        composable(Screen.MyShopOffers.route) { MyShopOffersScreen(navController) }
+        composable(Screen.ShopProfile.route) { ShopProfileScreen(navController) }
+
         composable(Screen.EditShopProfile.route) {
-            EditShopProfileScreen()
+            EditShopProfileScreen(navController = navController)
         }
+
+        composable(
+            route = Screen.EditShop.route,
+            arguments = listOf(navArgument("shopId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val shopId = backStackEntry.arguments?.getString("shopId") ?: ""
+            EditShopProfileScreen(navController = navController, shopId = shopId)
+        }
+
         composable(
             route = Screen.OfferDetails.route,
             arguments = listOf(navArgument("offerId") { type = NavType.StringType })
@@ -69,44 +53,24 @@ fun GhoastNavGraph(navController: NavHostController) {
             OfferDetailsScreen(navController = navController, offerId = offerId)
         }
 
-        // ✅ ΕΔΩ ΕΙΝΑΙ Η ΔΙΟΡΘΩΣΗ για OffersMapScreen
-        composable(route = Screen.OffersMap.route) {
-            OffersMapScreen(navController = navController)
-        }
-        composable("favorite_shops") {
-            FavoriteShopsScreen(navController = navController)
-        }
-
-        composable("favorite_offers") {
-            FavoriteOffersScreen(navController = navController)
+        // ✅ Διορθωμένη πλοήγηση για Edit Offer
+        composable(
+            route = Screen.EditOffer.route,
+            arguments = listOf(navArgument("offerId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val offerId = backStackEntry.arguments?.getString("offerId") ?: ""
+            EditOfferScreen(navController = navController, offerId = offerId)
         }
 
-
-        composable("all_shops") {
-            AllShopsScreen(navController = navController)
-        }
-        composable("user_profile") {
-            UserProfileScreen()
-        }
-
-        composable("help") {
-                    HelpScreen()
-                }
-
-
-        composable("contact") {
-                    ContactScreen()
-                }
-        composable("notifications") {
-            UserNotificationsScreen()
-        }
-        composable(route = Screen.AddNewShop.route) {
-            AddNewShopScreen(navController = navController)
-        }
-
-
+        composable(Screen.OffersMap.route) { OffersMapScreen(navController = navController) }
+        composable(Screen.FavoriteShops.route) { FavoriteShopsScreen(navController = navController) }
+        composable(Screen.FavoriteOffers.route) { FavoriteOffersScreen(navController = navController) }
+        composable("all_shops") { AllShopsScreen(navController = navController) }
+        composable(Screen.UserProfile.route) { UserProfileScreen() }
+        composable("help") { HelpScreen() }
+        composable("contact") { ContactScreen() }
+        composable("notifications") { UserNotificationsScreen() }
+        composable(Screen.AddNewShop.route) { AddNewShopScreen(navController = navController) }
+        composable(Screen.MyShops.route) { MyShopsScreen(navController = navController) }
     }
 }
-
-
-

@@ -10,8 +10,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.google.firebase.auth.FirebaseAuth
 import com.ghoast.ui.navigation.Screen
+import com.google.firebase.auth.FirebaseAuth
+
 import com.ghoast.utils.FCMTokenUtils // ✅ import for FCM update
 
 @Composable

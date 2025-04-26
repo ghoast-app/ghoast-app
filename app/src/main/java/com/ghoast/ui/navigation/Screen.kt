@@ -14,9 +14,19 @@ sealed class Screen(val route: String) {
     object AddOffer : Screen("add_offer")
     object MyShopOffers : Screen("my_shop_offers")
     object ShopProfile : Screen("shop_profile")
-    object EditOffer : Screen("edit_offer")
+
+    object EditOffer : Screen("edit_offer/{offerId}") {
+        fun createRoute(offerId: String): String = "edit_offer/$offerId"
+    }
+
     object EditShopProfile : Screen("edit_shop_profile")
     object AddNewShop : Screen("add_new_shop")
+    object MyShops : Screen("my_shops")
+
+    object EditShop : Screen("edit_shop/{shopId}") {
+        fun createRoute(shopId: String): String = "edit_shop/$shopId"
+    }
+
     // Register
     object RegisterUser : Screen("register_user")
     object RegisterShop : Screen("register_shop")

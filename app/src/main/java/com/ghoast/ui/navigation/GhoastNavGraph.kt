@@ -1,11 +1,14 @@
 package com.ghoast.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.ghoast.billing.BillingViewModel
+import com.ghoast.ui.billing.OfferLimitExceededScreen
 import com.ghoast.ui.contact.ContactScreen
 import com.ghoast.ui.help.HelpScreen
 import com.ghoast.ui.home.OffersHomeScreen
@@ -72,5 +75,21 @@ fun GhoastNavGraph(navController: NavHostController) {
         composable("notifications") { UserNotificationsScreen() }
         composable(Screen.AddNewShop.route) { AddNewShopScreen(navController = navController) }
         composable(Screen.MyShops.route) { MyShopsScreen(navController = navController) }
+
+        composable(Screen.OfferLimitExceeded.route) {
+            OfferLimitExceededScreen(
+                billingViewModel = viewModel<BillingViewModel>(),
+
+                onCancel = {
+                    navController.popBackStack()
+                },
+                onPaymentSuccess = {
+                    navController.navigate(Screen.AddOffer.route) {
+                        popUpTo(Screen.OfferLimitExceeded.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
     }
 }

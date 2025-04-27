@@ -13,7 +13,6 @@ import com.ghoast.ui.navigation.Screen
 import com.ghoast.ui.session.UserSessionViewModel
 import com.ghoast.ui.session.UserType
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OffersTopBar(
@@ -131,6 +130,15 @@ fun OffersTopBar(
                 }
             }
 
+            // ΝΕΟ Κουμπί για αγορά
+            DropdownMenuItem(
+                text = { Text("💳 Αγόρασε Προσφορά ή Συνδρομή") },
+                onClick = {
+                    navController.navigate(Screen.OfferLimitExceeded.route)
+                    onMenuExpand(false)
+                }
+            )
+
             DropdownMenuItem(
                 text = { Text("Βοήθεια") },
                 onClick = {
@@ -145,7 +153,6 @@ fun OffersTopBar(
                     onMenuExpand(false)
                 }
             )
-
             DropdownMenuItem(
                 text = { Text("Logout") },
                 onClick = {

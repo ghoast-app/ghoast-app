@@ -5,19 +5,22 @@ import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.ghoast.model.Offer
-import com.ghoast.model.Shop
 import com.ghoast.ui.home.OffersViewModel
 import com.ghoast.ui.navigation.Screen
 import com.ghoast.util.LocationPermissionHandler
@@ -50,11 +53,12 @@ fun OffersMapScreen(
     val offers = offersViewModel.filteredOffers.collectAsState().value
     val shops = shopsMapViewModel.shops.collectAsState().value
 
-    var selectedOffer by remember { mutableStateOf<Offer?>(null) }
-    var recenter by remember { mutableStateOf(true) }
+    var selectedOffers by remember { mutableStateOf<List<Offer>>(emptyList()) }
+    var selectedOfferIndex by remember { mutableStateOf(0) }
+    var recenter by remember { mutableStateOf(false) }
     var showFilterDialog by remember { mutableStateOf(false) }
-
     var tabIndex by remember { mutableStateOf(0) }
+    var isRecenterButtonPressed by remember { mutableStateOf(false) }
 
     LocationPermissionHandler(
         onPermissionGranted = {
@@ -71,25 +75,20 @@ fun OffersMapScreen(
         }
     )
 
-    if (recenter) {
-        LaunchedEffect(Unit) {
+    LaunchedEffect(recenter) {
+        if (recenter) {
             try {
                 val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
-                val location =
-                    fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
-                        .await()
+                val location = fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null).await()
 
-                val target = if (location != null) {
-                    LatLng(location.latitude, location.longitude).also {
-                        userLatLng = it
-                        offersViewModel.userLatitude = it.latitude
-                        offersViewModel.userLongitude = it.longitude
+                val target = location?.let {
+                    LatLng(it.latitude, it.longitude).also { loc ->
+                        userLatLng = loc
+                        offersViewModel.userLatitude = loc.latitude
+                        offersViewModel.userLongitude = loc.longitude
                         offersViewModel.applyFilters()
-
                     }
-                } else {
-                    defaultLatLng
-                }
+                } ?: defaultLatLng
 
                 cameraPositionState.animate(
                     update = CameraUpdateFactory.newLatLngZoom(target, 12f),
@@ -99,6 +98,7 @@ fun OffersMapScreen(
                 Log.e("MapScreen", "❌ Σφάλμα τοποθεσίας", e)
             } finally {
                 recenter = false
+                isRecenterButtonPressed = false
             }
         }
     }
@@ -119,27 +119,10 @@ fun OffersMapScreen(
                         }
                     }
                 )
-
                 TabRow(selectedTabIndex = tabIndex) {
-                    Tab(
-                        selected = tabIndex == 0,
-                        onClick = { tabIndex = 0 },
-                        text = { Text("Προσφορές") }
-                    )
-                    Tab(
-                        selected = tabIndex == 1,
-                        onClick = { tabIndex = 1 },
-                        text = { Text("Καταστήματα") }
-                    )
+                    Tab(selected = tabIndex == 0, onClick = { tabIndex = 0 }, text = { Text("Προσφορές") })
+                    Tab(selected = tabIndex == 1, onClick = { tabIndex = 1 }, text = { Text("Καταστήματα") })
                 }
-            }
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { recenter = true },
-                modifier = Modifier.padding(16.dp)
-            ) {
-                Text("📍")
             }
         }
     ) { paddingValues ->
@@ -148,7 +131,6 @@ fun OffersMapScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-
             GoogleMap(
                 modifier = Modifier.fillMaxSize(),
                 cameraPositionState = cameraPositionState
@@ -163,7 +145,8 @@ fun OffersMapScreen(
                                 state = MarkerState(position = LatLng(lat, lng)),
                                 icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED),
                                 onClick = {
-                                    selectedOffer = offer
+                                    selectedOffers = offers.filter { it.shopId == offer.shopId }
+                                    selectedOfferIndex = 0
                                     true
                                 }
                             )
@@ -185,7 +168,9 @@ fun OffersMapScreen(
                 }
             }
 
-            selectedOffer?.let { offer ->
+            if (selectedOffers.isNotEmpty()) {
+                val offer = selectedOffers[selectedOfferIndex]
+
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -194,39 +179,74 @@ fun OffersMapScreen(
                     elevation = CardDefaults.cardElevation(8.dp)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("${selectedOfferIndex + 1} / ${selectedOffers.size}", style = MaterialTheme.typography.labelLarge)
+                            IconButton(onClick = { selectedOffers = emptyList() }) {
+                                Icon(Icons.Default.Close, contentDescription = "Κλείσιμο")
+                            }
+                        }
                         Text(offer.shopName, style = MaterialTheme.typography.titleMedium)
                         Text(offer.title, style = MaterialTheme.typography.bodyMedium)
                         Text("${offer.discount}%", style = MaterialTheme.typography.bodySmall)
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "περισσότερα...",
-                            modifier = Modifier
-                                .align(Alignment.End)
-                                .clickable {
-                                    offer.id.let { id ->
-                                        navController.navigate(Screen.OfferDetails.createRoute(id))
-                                        selectedOffer = null
-                                    }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            IconButton(onClick = {
+                                selectedOfferIndex = if (selectedOfferIndex == 0) selectedOffers.lastIndex else selectedOfferIndex - 1
+                            }) {
+                                Text("◀")
+                            }
+                            Text(
+                                text = "Περισσότερα...",
+                                modifier = Modifier.clickable {
+                                    navController.navigate(Screen.OfferDetails.createRoute(offer.id))
+                                    selectedOffers = emptyList()
                                 },
-                            color = MaterialTheme.colorScheme.primary,
-                            style = MaterialTheme.typography.labelLarge
-                        )
+                                color = MaterialTheme.colorScheme.primary,
+                                style = MaterialTheme.typography.labelLarge
+                            )
+                            IconButton(onClick = {
+                                selectedOfferIndex = if (selectedOfferIndex == selectedOffers.lastIndex) 0 else selectedOfferIndex + 1
+                            }) {
+                                Text("▶")
+                            }
+                        }
                     }
                 }
+            }
+
+            // ✅ Floating κουμπί επανακέντρωσης
+            FloatingActionButton(
+                onClick = {
+                    isRecenterButtonPressed = true
+                    recenter = true
+                },
+                shape = CircleShape,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = 88.dp, end = 16.dp)
+                    .graphicsLayer {
+                        rotationZ = if (isRecenterButtonPressed) 360f else 0f
+                    },
+                containerColor = MaterialTheme.colorScheme.primaryContainer
+            ) {
+                Icon(Icons.Default.MyLocation, contentDescription = "Επανακέντρωση")
             }
 
             if (showFilterDialog) {
                 MapFiltersDialog(
                     selectedCategory = offersViewModel.selectedCategory,
                     selectedDistance = offersViewModel.selectedDistance ?: 10,
-                    onCategoryChange = {
-                        offersViewModel.setCategoryFilter(it) // ✅ σωστή μέθοδος
-                    },
-                    onDistanceChange = {
-                        offersViewModel.setDistanceFilter(it) // ✅ σωστή μέθοδος
-                    },
+                    onCategoryChange = { offersViewModel.setCategoryFilter(it) },
+                    onDistanceChange = { offersViewModel.setDistanceFilter(it) },
                     onApply = {
-                        offersViewModel.applyFilters() // ✅ άμεση εφαρμογή χωρίς fetch
+                        offersViewModel.applyFilters()
                         showFilterDialog = false
                     },
                     onReset = {

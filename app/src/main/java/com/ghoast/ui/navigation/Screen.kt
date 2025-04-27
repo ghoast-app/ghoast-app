@@ -4,6 +4,7 @@ sealed class Screen(val route: String) {
     object OffersHome : Screen("offers_home")
     object OffersMap : Screen("offers_map")
     object Login : Screen("login")
+    object OfferLimitExceeded : Screen("offer_limit_exceeded")
 
     // User Screens
     object FavoriteShops : Screen("favorite_shops")
@@ -34,5 +35,7 @@ sealed class Screen(val route: String) {
     // Offer Details
     object OfferDetails : Screen("offer_details/{offerId}") {
         fun createRoute(offerId: String): String = "offer_details/$offerId"
+
+
     }
 }

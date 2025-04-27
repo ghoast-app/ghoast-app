@@ -7,12 +7,12 @@ plugins {
 android {
 
     namespace = "com.ghoast"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.ghoast"
         minSdk = 26
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -47,6 +47,7 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview:1.5.4")
     implementation(libs.firebase.firestore.ktx)
     implementation(libs.play.services.location)
+    implementation(libs.androidx.compose.material3)
     debugImplementation("androidx.compose.ui:ui-tooling:1.5.4")
 
     // Navigation Compose
@@ -98,5 +99,6 @@ dependencies {
     implementation("com.google.accompanist:accompanist-permissions:0.32.0")
     implementation ("com.google.firebase:firebase-messaging")
     implementation ("com.google.firebase:firebase-functions-ktx:20.4.0")
+    implementation ("com.android.billingclient:billing:6.1.0")
 
 }

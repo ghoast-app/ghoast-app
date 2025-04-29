@@ -100,5 +100,6 @@ dependencies {
     implementation ("com.google.firebase:firebase-messaging")
     implementation ("com.google.firebase:firebase-functions-ktx:20.4.0")
     implementation ("com.android.billingclient:billing:6.1.0")
+    implementation ("com.google.accompanist:accompanist-swiperefresh:0.32.0")
 
 }

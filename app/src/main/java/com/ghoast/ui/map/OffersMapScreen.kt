@@ -1,8 +1,10 @@
+// OffersMapScreen.kt με ΣΩΣΤΗ διαχείριση Loading Spinner & Marker Details
 
 package com.ghoast.ui.map
 
 import android.annotation.SuppressLint
 import android.util.Log
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -15,6 +17,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -59,6 +62,7 @@ fun OffersMapScreen(
     var showFilterDialog by remember { mutableStateOf(false) }
     var tabIndex by remember { mutableStateOf(0) }
     var isRecenterButtonPressed by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(true) }
 
     LocationPermissionHandler(
         onPermissionGranted = {
@@ -77,28 +81,29 @@ fun OffersMapScreen(
 
     LaunchedEffect(recenter) {
         if (recenter) {
+            isLoading = true
             try {
                 val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
                 val location = fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null).await()
 
-                val target = location?.let {
-                    LatLng(it.latitude, it.longitude).also { loc ->
-                        userLatLng = loc
-                        offersViewModel.userLatitude = loc.latitude
-                        offersViewModel.userLongitude = loc.longitude
-                        offersViewModel.applyFilters()
-                    }
-                } ?: defaultLatLng
+                if (location != null) {
+                    val target = LatLng(location.latitude, location.longitude)
+                    userLatLng = target
+                    offersViewModel.userLatitude = target.latitude
+                    offersViewModel.userLongitude = target.longitude
+                    offersViewModel.applyFilters()
 
-                cameraPositionState.animate(
-                    update = CameraUpdateFactory.newLatLngZoom(target, 12f),
-                    durationMs = 1000
-                )
+                    cameraPositionState.animate(
+                        update = CameraUpdateFactory.newLatLngZoom(target, 12f),
+                        durationMs = 1000
+                    )
+                }
             } catch (e: Exception) {
                 Log.e("MapScreen", "❌ Σφάλμα τοποθεσίας", e)
             } finally {
                 recenter = false
                 isRecenterButtonPressed = false
+                isLoading = false
             }
         }
     }
@@ -221,7 +226,6 @@ fun OffersMapScreen(
                 }
             }
 
-            // ✅ Floating κουμπί επανακέντρωσης
             FloatingActionButton(
                 onClick = {
                     isRecenterButtonPressed = true
@@ -237,6 +241,17 @@ fun OffersMapScreen(
                 containerColor = MaterialTheme.colorScheme.primaryContainer
             ) {
                 Icon(Icons.Default.MyLocation, contentDescription = "Επανακέντρωση")
+            }
+
+            if (isLoading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.3f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
             }
 
             if (showFilterDialog) {

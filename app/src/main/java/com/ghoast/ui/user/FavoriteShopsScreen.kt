@@ -11,8 +11,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import com.ghoast.ui.user.ShopCard
 import com.ghoast.viewmodel.FavoritesViewModel
+import com.ghoast.ui.navigation.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,7 +40,7 @@ fun FavoriteShopsScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("🏪", style = MaterialTheme.typography.displayMedium)
+                        Text("\uD83C\uDFEA", style = MaterialTheme.typography.displayMedium)
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             "Δεν έχετε αγαπημένα καταστήματα ακόμα.",
@@ -61,6 +61,9 @@ fun FavoriteShopsScreen(
                             isFavorite = true,
                             onToggleFavorite = {
                                 favoritesViewModel.toggleFavoriteShop(shop.id)
+                            },
+                            onClick = {
+                                navController.navigate(Screen.ShopDetails.createRoute(shop.id))
                             }
                         )
                         Spacer(modifier = Modifier.height(8.dp))

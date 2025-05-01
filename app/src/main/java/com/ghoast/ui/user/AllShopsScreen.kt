@@ -18,6 +18,7 @@ import com.ghoast.util.LocationUtils
 import com.ghoast.viewmodel.AllShopsViewModel
 import com.ghoast.viewmodel.FavoritesViewModel
 import com.google.android.gms.location.LocationServices
+import com.ghoast.ui.navigation.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -124,8 +125,12 @@ fun AllShopsScreen(navController: NavHostController) {
                         shop = shop,
                         isFavorite = favoritesViewModel.favoriteShops.collectAsState().value.any { it.id == shop.id },
                         onToggleFavorite = { favoritesViewModel.toggleFavoriteShop(shop.id) },
-                        distanceInKm = distanceInKm
+                        distanceInKm = distanceInKm,
+                        onClick = {
+                            navController.navigate(Screen.ShopDetails.createRoute(shop.id))
+                        }
                     )
+
 
                     Divider()
                 }

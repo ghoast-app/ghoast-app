@@ -99,5 +99,21 @@ fun GhoastNavGraph(navController: NavHostController) {
                 }
             )
         }
+
+        composable(
+            route = Screen.ShopDetails.route,
+            arguments = listOf(navArgument("shopId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val shopId = backStackEntry.arguments?.getString("shopId") ?: ""
+            ShopDetailsScreen(shopId = shopId, navController = navController)
+        }
+
+        composable(
+            route = Screen.ShopOffers.route,
+            arguments = listOf(navArgument("shopId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val shopId = backStackEntry.arguments?.getString("shopId") ?: ""
+            ShopOffersScreen(shopId = shopId, navController = navController)
+        }
     }
 }

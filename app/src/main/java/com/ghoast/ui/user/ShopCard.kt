@@ -1,5 +1,6 @@
 package com.ghoast.ui.user
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -18,12 +19,14 @@ fun ShopCard(
     shop: Shop,
     isFavorite: Boolean,
     onToggleFavorite: () -> Unit,
-    distanceInKm: Float? = null
+    distanceInKm: Float? = null,
+    onClick: () -> Unit
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = 4.dp)
+            .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
@@ -67,7 +70,7 @@ fun ShopCard(
                 AssistChip(
                     onClick = {},
                     label = {
-                        Text(shop.categories.first()) // Εμφανίζει την πρώτη κατηγορία
+                        Text(shop.categories.first())
                     },
                     modifier = Modifier.padding(top = 4.dp)
                 )

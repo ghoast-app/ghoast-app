@@ -1,24 +1,40 @@
-// OffersHomeViewModel.kt
+// OffersHomeViewModel.kt - με filtering, sorting και απόσταση
 
 package com.ghoast.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ghoast.model.Offer
+import com.ghoast.util.LocationUtils
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import com.ghoast.ui.viewmodel.SortMode
+
 
 class OffersHomeViewModel : ViewModel() {
+
+    private val db = FirebaseFirestore.getInstance()
+    private val auth = FirebaseAuth.getInstance()
 
     private val _offers = MutableStateFlow<List<Offer>>(emptyList())
     val offers: StateFlow<List<Offer>> = _offers
 
+    private val _filteredOffers = MutableStateFlow<List<Offer>>(emptyList())
+    val filteredOffers: StateFlow<List<Offer>> = _filteredOffers
+
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
-    private val db = FirebaseFirestore.getInstance()
+    var selectedCategory: String? = null
+    var selectedDistance: Int? = 10
+    var selectedSortMode: SortMode = SortMode.DISTANCE
+
+
+    var userLatitude: Double? = null
+    var userLongitude: Double? = null
 
     init {
         fetchOffers()
@@ -31,8 +47,20 @@ class OffersHomeViewModel : ViewModel() {
                 db.collection("offers")
                     .get()
                     .addOnSuccessListener { result ->
-                        val offersList = result.documents.mapNotNull { it.toObject(Offer::class.java) }
+                        val offersList = result.documents.mapNotNull { doc ->
+                            val offer = doc.toObject(Offer::class.java)?.copy(id = doc.id)
+                            offer?.let {
+                                if (userLatitude != null && userLongitude != null && it.latitude != null && it.longitude != null) {
+                                    val distance = LocationUtils.calculateHaversineDistance(
+                                        userLatitude!!, userLongitude!!,
+                                        it.latitude!!, it.longitude!!
+                                    )
+                                    it.copy(distanceKm = distance)
+                                } else it
+                            }
+                        }
                         _offers.value = offersList
+                        applyFilters()
                         _isLoading.value = false
                     }
                     .addOnFailureListener {
@@ -46,5 +74,44 @@ class OffersHomeViewModel : ViewModel() {
 
     fun refreshOffers() {
         fetchOffers()
+    }
+
+    fun setCategoryFilter(category: String?) {
+        selectedCategory = category
+        applyFilters()
+    }
+
+    fun setDistanceFilter(distance: Int?) {
+        selectedDistance = distance
+        applyFilters()
+    }
+
+    fun setSortMode(mode: SortMode) {
+        selectedSortMode = mode
+        applyFilters()
+    }
+
+    private fun applyFilters() {
+        val category = selectedCategory
+        val distance = selectedDistance
+        val lat = userLatitude
+        val lng = userLongitude
+
+        var filtered = _offers.value.filter { offer ->
+            val matchCategory = category == null || category == "Όλες οι κατηγορίες" || offer.category == category
+            val matchDistance = if (lat != null && lng != null && distance != null) {
+                offer.distanceKm?.let { it <= distance } ?: true
+            } else true
+            matchCategory && matchDistance
+        }
+
+        filtered = when (selectedSortMode) {
+            SortMode.DISCOUNT -> filtered.sortedByDescending { it.discount.replace("%", "").toIntOrNull() ?: 0 }
+            SortMode.NEWEST -> filtered.sortedByDescending { it.timestamp }
+            SortMode.DISTANCE -> filtered.sortedBy { it.distanceKm ?: Double.MAX_VALUE }
+        }
+
+
+        _filteredOffers.value = filtered
     }
 }

@@ -1,4 +1,4 @@
-// OffersMapScreen.kt με ΣΩΣΤΗ διαχείριση Loading Spinner & Marker Details
+// OffersMapScreen.kt - Refactored to assume permission already handled
 
 package com.ghoast.ui.map
 
@@ -26,8 +26,6 @@ import androidx.navigation.NavHostController
 import com.ghoast.model.Offer
 import com.ghoast.ui.home.OffersViewModel
 import com.ghoast.ui.navigation.Screen
-import com.ghoast.util.LocationPermissionHandler
-import com.ghoast.util.LocationSettingsHelper
 import com.ghoast.viewmodel.ShopsMapViewModel
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
@@ -58,26 +56,11 @@ fun OffersMapScreen(
 
     var selectedOffers by remember { mutableStateOf<List<Offer>>(emptyList()) }
     var selectedOfferIndex by remember { mutableStateOf(0) }
-    var recenter by remember { mutableStateOf(false) }
+    var recenter by remember { mutableStateOf(true) } // ξεκινάμε με true για να κάνουμε zoom
     var showFilterDialog by remember { mutableStateOf(false) }
     var tabIndex by remember { mutableStateOf(0) }
     var isRecenterButtonPressed by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(true) }
-
-    LocationPermissionHandler(
-        onPermissionGranted = {
-            LocationSettingsHelper.checkGpsEnabled(context) { gpsEnabled ->
-                if (!gpsEnabled) {
-                    LocationSettingsHelper.requestEnableGps(context)
-                } else {
-                    recenter = true
-                }
-            }
-        },
-        onPermissionDenied = {
-            Log.e("MapScreen", "❌ Δεν δόθηκε άδεια τοποθεσίας")
-        }
-    )
 
     LaunchedEffect(recenter) {
         if (recenter) {

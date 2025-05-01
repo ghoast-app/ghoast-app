@@ -7,6 +7,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -38,7 +39,15 @@ fun FavoriteOffersScreen(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("Δεν έχετε αγαπημένες προσφορές.")
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("⭐", style = MaterialTheme.typography.displayMedium)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            "Δεν έχετε αγαπημένες προσφορές ακόμα.",
+                            style = MaterialTheme.typography.bodyLarge,
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
             } else {
                 LazyColumn(
@@ -53,7 +62,6 @@ fun FavoriteOffersScreen(
                             onToggleFavorite = { favoritesViewModel.toggleFavoriteOffer(offer.id) },
                             onClick = {}
                         )
-
                     }
                 }
             }

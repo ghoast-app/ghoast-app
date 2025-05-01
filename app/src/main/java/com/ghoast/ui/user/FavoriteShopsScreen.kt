@@ -7,6 +7,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -28,16 +29,25 @@ fun FavoriteShopsScreen(
             )
         }
     ) { padding ->
-        Box(modifier = Modifier
-            .fillMaxSize()
-            .padding(padding)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
         ) {
             if (favoriteShops.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("Δεν έχετε αγαπημένα καταστήματα.")
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("🏪", style = MaterialTheme.typography.displayMedium)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            "Δεν έχετε αγαπημένα καταστήματα ακόμα.",
+                            style = MaterialTheme.typography.bodyLarge,
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
             } else {
                 LazyColumn(

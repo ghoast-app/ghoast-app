@@ -20,14 +20,25 @@ import com.ghoast.ui.offers.OfferDetailsScreen
 import com.ghoast.ui.register.RegisterShopScreen
 import com.ghoast.ui.register.RegisterUserScreen
 import com.ghoast.ui.shop.*
+import com.ghoast.ui.start.StartScreen
 import com.ghoast.ui.user.*
 
 @Composable
 fun GhoastNavGraph(navController: NavHostController) {
     NavHost(
         navController = navController,
-        startDestination = Screen.OffersHome.route
+        startDestination = Screen.Start.route
     ) {
+        composable(Screen.Start.route) {
+            StartScreen(
+                onPermissionGranted = {
+                    navController.navigate(Screen.OffersHome.route) {
+                        popUpTo(Screen.Start.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
         composable(Screen.Login.route) { LoginScreen(navController) }
         composable(Screen.RegisterUser.route) { RegisterUserScreen(navController) }
         composable(Screen.RegisterShop.route) { RegisterShopScreen(navController) }
@@ -56,7 +67,6 @@ fun GhoastNavGraph(navController: NavHostController) {
             OfferDetailsScreen(navController = navController, offerId = offerId)
         }
 
-        // ✅ Διορθωμένη πλοήγηση για Edit Offer
         composable(
             route = Screen.EditOffer.route,
             arguments = listOf(navArgument("offerId") { type = NavType.StringType })
@@ -79,7 +89,6 @@ fun GhoastNavGraph(navController: NavHostController) {
         composable(Screen.OfferLimitExceeded.route) {
             OfferLimitExceededScreen(
                 billingViewModel = viewModel<BillingViewModel>(),
-
                 onCancel = {
                     navController.popBackStack()
                 },
@@ -90,6 +99,5 @@ fun GhoastNavGraph(navController: NavHostController) {
                 }
             )
         }
-
     }
 }

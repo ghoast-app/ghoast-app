@@ -7,6 +7,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ghoast.ui.components.LoadingSpinner
@@ -27,7 +28,15 @@ fun UserNotificationsScreen() {
             LoadingSpinner()
         } else if (notifications.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Δεν υπάρχουν ειδοποιήσεις.")
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("🔔", style = MaterialTheme.typography.displayMedium)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "Δεν υπάρχουν ειδοποιήσεις αυτή τη στιγμή.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        textAlign = TextAlign.Center
+                    )
+                }
             }
         } else {
             LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {

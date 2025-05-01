@@ -11,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -56,7 +57,6 @@ fun MyShopOffersScreen(navController: NavHostController) {
                 .padding(paddingValues)
                 .padding(16.dp)
         ) {
-            // 🔽 Dropdown επιλογής καταστήματος
             var expanded by remember { mutableStateOf(false) }
             ExposedDropdownMenuBox(
                 expanded = expanded,
@@ -103,6 +103,20 @@ fun MyShopOffersScreen(navController: NavHostController) {
                         text = errorMessage ?: "Σφάλμα.",
                         color = MaterialTheme.colorScheme.error
                     )
+                }
+
+                offers.isEmpty() -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("📭", style = MaterialTheme.typography.displayMedium)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Δεν έχετε προσφορές για αυτό το κατάστημα.",
+                                style = MaterialTheme.typography.bodyLarge,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
                 }
 
                 else -> {

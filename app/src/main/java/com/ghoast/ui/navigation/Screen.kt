@@ -5,6 +5,7 @@ sealed class Screen(val route: String) {
     object OffersMap : Screen("offers_map")
     object Login : Screen("login")
     object OfferLimitExceeded : Screen("offer_limit_exceeded")
+    object Start : Screen("start")
 
     // User Screens
     object FavoriteShops : Screen("favorite_shops")

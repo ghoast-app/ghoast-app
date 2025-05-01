@@ -120,9 +120,10 @@ class AddOfferViewModel : ViewModel() {
 
     private suspend fun uploadImages(imageUris: List<Uri>): List<String> = withContext(Dispatchers.IO) {
         val urls = mutableListOf<String>()
+        val userId = auth.currentUser?.uid ?: throw Exception("Μη έγκυρος χρήστης")
         for (uri in imageUris) {
             val fileName = UUID.randomUUID().toString() + ".jpg"
-            val imageRef = storage.reference.child("offer_images/$fileName")
+            val imageRef = storage.reference.child("offers/$userId/$fileName") // ✅ νέο path
             try {
                 val uploadTask = imageRef.putFile(uri).await()
                 if (uploadTask.task.isSuccessful) {

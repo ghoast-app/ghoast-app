@@ -1,4 +1,4 @@
-// OffersMapScreen.kt - Refactored to assume permission already handled
+// OffersMapScreen.kt - Full working version with all features restored
 
 package com.ghoast.ui.map
 
@@ -26,6 +26,7 @@ import androidx.navigation.NavHostController
 import com.ghoast.model.Offer
 import com.ghoast.ui.home.OffersViewModel
 import com.ghoast.ui.navigation.Screen
+import com.ghoast.util.LocationPermissionHandler
 import com.ghoast.viewmodel.ShopsMapViewModel
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
@@ -34,6 +35,7 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.*
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -46,14 +48,12 @@ fun OffersMapScreen(
 ) {
     val context = LocalContext.current
     val defaultLatLng = LatLng(35.1856, 33.3823)
-    var userLatLng by remember { mutableStateOf<LatLng?>(null) }
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(defaultLatLng, 10f)
     }
+    val scope = rememberCoroutineScope()
 
-    val offers = offersViewModel.filteredOffers.collectAsState().value
-    val shops = shopsMapViewModel.shops.collectAsState().value
-
+    var userLatLng by remember { mutableStateOf<LatLng?>(null) }
     var selectedOffers by remember { mutableStateOf<List<Offer>>(emptyList()) }
     var selectedOfferIndex by remember { mutableStateOf(0) }
     var recenter by remember { mutableStateOf(true) }
@@ -62,27 +62,37 @@ fun OffersMapScreen(
     var isRecenterButtonPressed by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(true) }
 
+    val offers = offersViewModel.filteredOffers.collectAsState().value
+    val shops = shopsMapViewModel.shops.collectAsState().value
+
+    LocationPermissionHandler(
+        onPermissionGranted = {
+            recenter = true
+        },
+        onPermissionDenied = {
+            isLoading = false
+        }
+    )
+
     LaunchedEffect(recenter) {
         if (recenter) {
             isLoading = true
             try {
                 val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
                 val location = fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null).await()
-
                 if (location != null) {
                     val target = LatLng(location.latitude, location.longitude)
                     userLatLng = target
                     offersViewModel.userLatitude = target.latitude
                     offersViewModel.userLongitude = target.longitude
                     offersViewModel.applyFilters()
-
                     cameraPositionState.animate(
                         update = CameraUpdateFactory.newLatLngZoom(target, 12f),
                         durationMs = 1000
                     )
                 }
             } catch (e: Exception) {
-                Log.e("MapScreen", "\u274c Σφάλμα τοποθεσίας", e)
+                Log.e("MapScreen", "❌ Σφάλμα τοποθεσίας", e)
             } finally {
                 recenter = false
                 isRecenterButtonPressed = false
@@ -114,20 +124,23 @@ fun OffersMapScreen(
             }
         }
     ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
+        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             GoogleMap(
                 modifier = Modifier.fillMaxSize(),
                 cameraPositionState = cameraPositionState
             ) {
+                userLatLng?.let {
+                    Marker(
+                        state = MarkerState(position = it),
+                        title = "Εδώ βρίσκεσαι",
+                        icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)
+                    )
+                }
+
                 if (tabIndex == 0) {
                     offers.forEach { offer ->
                         val lat = offer.latitude ?: 0.0
                         val lng = offer.longitude ?: 0.0
-
                         if (lat != 0.0 && lng != 0.0) {
                             Marker(
                                 state = MarkerState(position = LatLng(lat, lng)),
@@ -144,9 +157,8 @@ fun OffersMapScreen(
                     shops.forEach { shop ->
                         val lat = shop.latitude
                         val lng = shop.longitude
-
                         if (lat != 0.0 && lng != 0.0) {
-                            MarkerInfoWindow(
+                            Marker(
                                 state = MarkerState(position = LatLng(lat, lng)),
                                 icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE),
                                 title = shop.shopName,
@@ -159,9 +171,25 @@ fun OffersMapScreen(
                 }
             }
 
+            FloatingActionButton(
+                onClick = {
+                    isRecenterButtonPressed = true
+                    recenter = true
+                },
+                shape = CircleShape,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = 88.dp, end = 16.dp)
+                    .graphicsLayer {
+                        rotationZ = if (isRecenterButtonPressed) 360f else 0f
+                    },
+                containerColor = MaterialTheme.colorScheme.primaryContainer
+            ) {
+                Icon(Icons.Default.MyLocation, contentDescription = "Επανακέντρωση")
+            }
+
             if (selectedOffers.isNotEmpty()) {
                 val offer = selectedOffers[selectedOfferIndex]
-
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -210,23 +238,6 @@ fun OffersMapScreen(
                         }
                     }
                 }
-            }
-
-            FloatingActionButton(
-                onClick = {
-                    isRecenterButtonPressed = true
-                    recenter = true
-                },
-                shape = CircleShape,
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(top = 88.dp, end = 16.dp)
-                    .graphicsLayer {
-                        rotationZ = if (isRecenterButtonPressed) 360f else 0f
-                    },
-                containerColor = MaterialTheme.colorScheme.primaryContainer
-            ) {
-                Icon(Icons.Default.MyLocation, contentDescription = "Επανακέντρωση")
             }
 
             if (isLoading) {

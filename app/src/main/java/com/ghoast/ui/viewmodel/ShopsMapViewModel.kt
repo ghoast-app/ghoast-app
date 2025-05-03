@@ -25,7 +25,7 @@ class ShopsMapViewModel : ViewModel() {
                 .get()
                 .addOnSuccessListener { snapshot ->
                     val result = snapshot.documents.mapNotNull { doc ->
-                        doc.toObject(Shop::class.java)
+                        doc.toObject(Shop::class.java)?.copy(id = doc.id)
                     }
                     _shops.value = result
                 }

@@ -56,7 +56,7 @@ fun OffersMapScreen(
 
     var selectedOffers by remember { mutableStateOf<List<Offer>>(emptyList()) }
     var selectedOfferIndex by remember { mutableStateOf(0) }
-    var recenter by remember { mutableStateOf(true) } // ξεκινάμε με true για να κάνουμε zoom
+    var recenter by remember { mutableStateOf(true) }
     var showFilterDialog by remember { mutableStateOf(false) }
     var tabIndex by remember { mutableStateOf(0) }
     var isRecenterButtonPressed by remember { mutableStateOf(false) }
@@ -82,7 +82,7 @@ fun OffersMapScreen(
                     )
                 }
             } catch (e: Exception) {
-                Log.e("MapScreen", "❌ Σφάλμα τοποθεσίας", e)
+                Log.e("MapScreen", "\u274c Σφάλμα τοποθεσίας", e)
             } finally {
                 recenter = false
                 isRecenterButtonPressed = false
@@ -146,10 +146,13 @@ fun OffersMapScreen(
                         val lng = shop.longitude
 
                         if (lat != 0.0 && lng != 0.0) {
-                            Marker(
+                            MarkerInfoWindow(
                                 state = MarkerState(position = LatLng(lat, lng)),
                                 icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE),
-                                title = shop.shopName
+                                title = shop.shopName,
+                                onInfoWindowClick = {
+                                    navController.navigate(Screen.ShopDetails.createRoute(shop.id))
+                                }
                             )
                         }
                     }

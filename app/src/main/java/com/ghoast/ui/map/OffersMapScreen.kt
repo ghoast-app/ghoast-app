@@ -1,4 +1,4 @@
-// OffersMapScreen.kt - Full working version with all features restored
+// OffersMapScreen.kt - Updated with dual-mode filters (offers & shops)
 
 package com.ghoast.ui.map
 
@@ -63,7 +63,7 @@ fun OffersMapScreen(
     var isLoading by remember { mutableStateOf(true) }
 
     val offers = offersViewModel.filteredOffers.collectAsState().value
-    val shops = shopsMapViewModel.shops.collectAsState().value
+    val shops = shopsMapViewModel.filteredShops.collectAsState().value
 
     LocationPermissionHandler(
         onPermissionGranted = {
@@ -85,7 +85,10 @@ fun OffersMapScreen(
                     userLatLng = target
                     offersViewModel.userLatitude = target.latitude
                     offersViewModel.userLongitude = target.longitude
+                    shopsMapViewModel.userLatitude = target.latitude
+                    shopsMapViewModel.userLongitude = target.longitude
                     offersViewModel.applyFilters()
+                    shopsMapViewModel.applyFilters()
                     cameraPositionState.animate(
                         update = CameraUpdateFactory.newLatLngZoom(target, 12f),
                         durationMs = 1000
@@ -253,17 +256,33 @@ fun OffersMapScreen(
 
             if (showFilterDialog) {
                 MapFiltersDialog(
-                    selectedCategory = offersViewModel.selectedCategory,
-                    selectedDistance = offersViewModel.selectedDistance ?: 10,
-                    onCategoryChange = { offersViewModel.setCategoryFilter(it) },
-                    onDistanceChange = { offersViewModel.setDistanceFilter(it) },
+                    selectedCategory = if (tabIndex == 0) offersViewModel.selectedCategory else shopsMapViewModel.selectedCategory,
+                    selectedDistance = if (tabIndex == 0) offersViewModel.selectedDistance ?: 10 else shopsMapViewModel.selectedDistance ?: 10,
+                    onlyNew = offersViewModel.onlyNewOffers,
+                    onlyWithOffers = shopsMapViewModel.onlyWithOffers,
+                    isShopMode = tabIndex == 1,
+                    onCategoryChange = {
+                        if (tabIndex == 0) offersViewModel.setCategoryFilter(it) else shopsMapViewModel.setCategoryFilter(it)
+                    },
+                    onDistanceChange = {
+                        if (tabIndex == 0) offersViewModel.setDistanceFilter(it) else shopsMapViewModel.setDistanceFilter(it)
+                    },
+                    onOnlyNewChange = { offersViewModel.setOnlyNewOffersFilter(it) },
+                    onOnlyWithOffersChange = { shopsMapViewModel.setOnlyWithOffersFilter(it) },
                     onApply = {
-                        offersViewModel.applyFilters()
+                        if (tabIndex == 0) offersViewModel.applyFilters() else shopsMapViewModel.applyFilters()
                         showFilterDialog = false
                     },
                     onReset = {
-                        offersViewModel.setCategoryFilter(null)
-                        offersViewModel.setDistanceFilter(null)
+                        if (tabIndex == 0) {
+                            offersViewModel.setCategoryFilter(null)
+                            offersViewModel.setDistanceFilter(null)
+                            offersViewModel.setOnlyNewOffersFilter(false)
+                        } else {
+                            shopsMapViewModel.setCategoryFilter(null)
+                            shopsMapViewModel.setDistanceFilter(null)
+                            shopsMapViewModel.setOnlyWithOffersFilter(false)
+                        }
                         showFilterDialog = false
                     },
                     onDismiss = { showFilterDialog = false }

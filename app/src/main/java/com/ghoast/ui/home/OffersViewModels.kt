@@ -25,6 +25,7 @@ class OffersViewModel : ViewModel() {
 
     var selectedCategory: String? = null
     var selectedDistance: Int? = null
+    var onlyNewOffers: Boolean = false
 
     var userLatitude: Double? = null
     var userLongitude: Double? = null
@@ -99,10 +100,18 @@ class OffersViewModel : ViewModel() {
         applyFilters()
     }
 
+    fun setOnlyNewOffersFilter(onlyNew: Boolean) {
+        onlyNewOffers = onlyNew
+        Log.d("FILTER_DEBUG", "✅ setOnlyNewOffersFilter called with: $onlyNew")
+        applyFilters()
+    }
+
     fun applyFilters() {
         val category = selectedCategory
         val distance = selectedDistance
         val hasLocation = userLatitude != null && userLongitude != null
+        val now = System.currentTimeMillis()
+        val sevenDaysInMillis = 7 * 24 * 60 * 60 * 1000
 
         _filteredOffers.value = _offers.value.filter { offer ->
             val matchCategory = category == null || offer.category == category
@@ -113,8 +122,13 @@ class OffersViewModel : ViewModel() {
                 offer.distanceKm != null && offer.distanceKm!! <= distance
             }
 
-            Log.d("FILTER_DEBUG", "🎯 Offer: ${offer.title}, Category: ${offer.category}, MatchCat: $matchCategory, MatchDist: $matchDistance")
-            matchCategory && matchDistance
+            val matchNew = if (!onlyNewOffers) true else {
+                offer.timestamp > 0L && (now - offer.timestamp <= sevenDaysInMillis)
+            }
+
+            Log.d("FILTER_DEBUG", "🎯 Offer: ${offer.title}, Category: ${offer.category}, MatchCat: $matchCategory, MatchDist: $matchDistance, MatchNew: $matchNew")
+
+            matchCategory && matchDistance && matchNew
         }
 
         Log.i("OffersViewModel", "🎯 Τελικές Φιλτραρισμένες: ${_filteredOffers.value.size}")

@@ -5,14 +5,20 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.Alignment
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MapFiltersDialog(
     selectedCategory: String?,
     selectedDistance: Int,
+    onlyNew: Boolean = false,
+    onlyWithOffers: Boolean = false,
+    isShopMode: Boolean = false,
     onCategoryChange: (String?) -> Unit,
     onDistanceChange: (Int) -> Unit,
+    onOnlyNewChange: (Boolean) -> Unit = {},
+    onOnlyWithOffersChange: (Boolean) -> Unit = {},
     onApply: () -> Unit,
     onReset: () -> Unit,
     onDismiss: () -> Unit
@@ -21,6 +27,8 @@ fun MapFiltersDialog(
 
     var category by remember { mutableStateOf(selectedCategory ?: "Όλα") }
     var distance by remember { mutableStateOf(selectedDistance) }
+    var onlyNewOffers by remember { mutableStateOf(onlyNew) }
+    var onlyActiveShops by remember { mutableStateOf(onlyWithOffers) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -28,6 +36,11 @@ fun MapFiltersDialog(
             TextButton(onClick = {
                 onCategoryChange(if (category == "Όλα") null else category)
                 onDistanceChange(distance)
+                if (isShopMode) {
+                    onOnlyWithOffersChange(onlyActiveShops)
+                } else {
+                    onOnlyNewChange(onlyNewOffers)
+                }
                 onApply()
             }) {
                 Text("Εφαρμογή")
@@ -47,7 +60,6 @@ fun MapFiltersDialog(
         title = { Text("Φίλτρα") },
         text = {
             Column {
-                // Κατηγορία
                 var expanded by remember { mutableStateOf(false) }
 
                 ExposedDropdownMenuBox(
@@ -81,7 +93,6 @@ fun MapFiltersDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Απόσταση
                 Text(text = "Απόσταση: $distance km")
                 Slider(
                     value = distance.toFloat(),
@@ -89,6 +100,26 @@ fun MapFiltersDialog(
                     valueRange = 1f..20f,
                     steps = 18
                 )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                if (isShopMode) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(
+                            checked = onlyActiveShops,
+                            onCheckedChange = { onlyActiveShops = it }
+                        )
+                        Text("Μόνο με προσφορές")
+                    }
+                } else {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(
+                            checked = onlyNewOffers,
+                            onCheckedChange = { onlyNewOffers = it }
+                        )
+                        Text("Μόνο νέες προσφορές")
+                    }
+                }
             }
         }
     )

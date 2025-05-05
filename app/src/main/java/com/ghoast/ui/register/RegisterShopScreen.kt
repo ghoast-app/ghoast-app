@@ -61,7 +61,23 @@ fun RegisterShopScreen(navController: NavHostController) {
         }
     }
 
-    val categoryOptions = listOf("Ανδρική ένδυση", "Ανδρική υπόδηση", "Γυναικεία ένδυση", "Γυναικεία υπόδηση", "Παιδική ένδυση", "Παιδική υπόδηση", "Αξεσουάρ")
+    val categoryOptions = listOf(
+        "Γυναικεία ένδυση",
+        "Γυναικεία υπόδηση",
+        "Ανδρική ένδυση",
+        "Ανδρική υπόδηση",
+        "Παιδική ένδυση",
+        "Παιδική υπόδηση",
+        "Αθλητική ένδυση",
+        "Αθλητική υπόδηση",
+        "Εσώρουχα",
+        "Καλλυντικά",
+        "Αξεσουάρ",
+        "Κοσμήματα",
+        "Οπτικά",
+        "Ρολόγια"
+    )
+
     val selectedCategories = remember { mutableStateListOf<String>() }
     var categoryDropdownExpanded by remember { mutableStateOf(false) }
 

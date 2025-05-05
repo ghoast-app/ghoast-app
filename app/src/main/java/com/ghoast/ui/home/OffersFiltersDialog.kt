@@ -60,14 +60,22 @@ fun OffersFiltersDialog(
 
                     val categories = listOf(
                         null to "Όλες οι κατηγορίες",
-                        "Ανδρική ένδυση" to "Ανδρική ένδυση",
-                        "Ανδρική υπόδηση" to "Ανδρική υπόδηση",
                         "Γυναικεία ένδυση" to "Γυναικεία ένδυση",
                         "Γυναικεία υπόδηση" to "Γυναικεία υπόδηση",
+                        "Ανδρική ένδυση" to "Ανδρική ένδυση",
+                        "Ανδρική υπόδηση" to "Ανδρική υπόδηση",
                         "Παιδική ένδυση" to "Παιδική ένδυση",
                         "Παιδική υπόδηση" to "Παιδική υπόδηση",
-                        "Αξεσουάρ" to "Αξεσουάρ"
+                        "Αθλητική ένδυση" to "Αθλητική ένδυση",
+                        "Αθλητική υπόδηση" to "Αθλητική υπόδηση",
+                        "Εσώρουχα" to "Εσώρουχα",
+                        "Καλλυντικά" to "Καλλυντικά",
+                        "Αξεσουάρ" to "Αξεσουάρ",
+                        "Κοσμήματα" to "Κοσμήματα",
+                        "Οπτικά" to "Οπτικά",
+                        "Ρολόγια" to "Ρολόγια"
                     )
+
 
                     categories.forEach { (value, label) ->
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -83,8 +91,8 @@ fun OffersFiltersDialog(
                     Slider(
                         value = localDistance.value.toFloat(),
                         onValueChange = { localDistance.value = it.toInt() },
-                        valueRange = 0f..100f,
-                        steps = 10
+                        valueRange = 1f..100f,
+                        steps = 99
                     )
 
                     Text("Ταξινόμηση κατά:", style = MaterialTheme.typography.titleMedium)

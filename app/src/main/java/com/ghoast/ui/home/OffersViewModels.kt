@@ -23,9 +23,13 @@ class OffersViewModel : ViewModel() {
     private val _favoriteOfferIds = MutableStateFlow<Set<String>>(emptySet())
     val favoriteOfferIds: StateFlow<Set<String>> = _favoriteOfferIds
 
+    private val _favoriteShopIds = MutableStateFlow<Set<String>>(emptySet())
+    val favoriteShopIds: StateFlow<Set<String>> = _favoriteShopIds
+
     var selectedCategory: String? = null
     var selectedDistance: Int? = null
     var onlyNewOffers: Boolean = false
+    var onlyFromFavoriteShops: Boolean = false
 
     var userLatitude: Double? = null
     var userLongitude: Double? = null
@@ -33,6 +37,7 @@ class OffersViewModel : ViewModel() {
     init {
         listenToOffers()
         fetchFavoriteOffers()
+        fetchFavoriteShops()
     }
 
     fun listenToOffers() {
@@ -56,8 +61,6 @@ class OffersViewModel : ViewModel() {
                                 userLatitude!!, userLongitude!!,
                                 rawOffer.latitude!!, rawOffer.longitude!!
                             )
-                            Log.d("DISTANCE_DEBUG", "📏 Υπολογισμός απόστασης για ${rawOffer.title}: $distance km")
-
                             rawOffer.copy(distanceKm = String.format("%.1f", distance).toDouble())
                         } else {
                             rawOffer
@@ -84,25 +87,38 @@ class OffersViewModel : ViewModel() {
             .addOnSuccessListener { result ->
                 val ids = result.map { it.id }.toSet()
                 _favoriteOfferIds.value = ids
-                Log.d("OffersViewModel", "⭐ Favorite Offers Loaded: $ids")
+            }
+    }
+
+    fun fetchFavoriteShops() {
+        val uid = auth.currentUser?.uid ?: return
+        db.collection("users")
+            .document(uid)
+            .collection("favorite_shops")
+            .get()
+            .addOnSuccessListener { result ->
+                val ids = result.map { it.id }.toSet()
+                _favoriteShopIds.value = ids
             }
     }
 
     fun setCategoryFilter(category: String?) {
         selectedCategory = category
-        Log.d("FILTER_DEBUG", "✅ setCategoryFilter called with: $category")
         applyFilters()
     }
 
     fun setDistanceFilter(distance: Int?) {
         selectedDistance = distance
-        Log.d("FILTER_DEBUG", "✅ setDistanceFilter called with: $distance")
         applyFilters()
     }
 
     fun setOnlyNewOffersFilter(onlyNew: Boolean) {
         onlyNewOffers = onlyNew
-        Log.d("FILTER_DEBUG", "✅ setOnlyNewOffersFilter called with: $onlyNew")
+        applyFilters()
+    }
+
+    fun setOnlyFromFavoriteShopsFilter(onlyFav: Boolean) {
+        onlyFromFavoriteShops = onlyFav
         applyFilters()
     }
 
@@ -110,28 +126,20 @@ class OffersViewModel : ViewModel() {
         val category = selectedCategory
         val distance = selectedDistance
         val hasLocation = userLatitude != null && userLongitude != null
-        val now = System.currentTimeMillis()
-        val sevenDaysInMillis = 7 * 24 * 60 * 60 * 1000
+        val favoriteShops = favoriteShopIds.value
 
         _filteredOffers.value = _offers.value.filter { offer ->
             val matchCategory = category == null || offer.category == category
-
             val matchDistance = if (!hasLocation || distance == null) {
                 true
             } else {
                 offer.distanceKm != null && offer.distanceKm!! <= distance
             }
+            val matchNew = !onlyNewOffers || offer.isNew
+            val matchFavoriteShop = !onlyFromFavoriteShops || favoriteShops.contains(offer.shopId)
 
-            val matchNew = if (!onlyNewOffers) true else {
-                offer.timestamp > 0L && (now - offer.timestamp <= sevenDaysInMillis)
-            }
-
-            Log.d("FILTER_DEBUG", "🎯 Offer: ${offer.title}, Category: ${offer.category}, MatchCat: $matchCategory, MatchDist: $matchDistance, MatchNew: $matchNew")
-
-            matchCategory && matchDistance && matchNew
+            matchCategory && matchDistance && matchNew && matchFavoriteShop
         }
-
-        Log.i("OffersViewModel", "🎯 Τελικές Φιλτραρισμένες: ${_filteredOffers.value.size}")
     }
 
     fun toggleFavorite(offerId: String) {

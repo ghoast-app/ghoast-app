@@ -65,7 +65,23 @@ fun EditShopProfileScreen(
         longitude = shop?.longitude ?: 0.0
     }
 
-    val categories = listOf("Ανδρική Ένδυση", "Γυναικεία Ένδυση", "Αξεσουάρ", "Παιδική Υπόδηση")
+    val categories = listOf(
+        "Γυναικεία ένδυση",
+        "Γυναικεία υπόδηση",
+        "Ανδρική ένδυση",
+        "Ανδρική υπόδηση",
+        "Παιδική ένδυση",
+        "Παιδική υπόδηση",
+        "Αθλητική ένδυση",
+        "Αθλητική υπόδηση",
+        "Εσώρουχα",
+        "Καλλυντικά",
+        "Αξεσουάρ",
+        "Κοσμήματα",
+        "Οπτικά",
+        "Ρολόγια"
+    )
+
     var expanded by remember { mutableStateOf(false) }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var isUploading by remember { mutableStateOf(false) }

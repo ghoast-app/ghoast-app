@@ -21,6 +21,7 @@ import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.ghoast.ui.navigation.Screen
 import com.ghoast.ui.session.UserSessionViewModel
+import com.ghoast.ui.session.UserType
 import com.ghoast.ui.viewmodel.OffersHomeViewModel
 import com.ghoast.ui.viewmodel.SortMode
 import com.google.android.gms.location.LocationServices
@@ -35,6 +36,7 @@ fun OffersHomeScreen(navController: NavHostController) {
     val isLoading by viewModel.isLoading.collectAsState()
 
     val sessionViewModel: UserSessionViewModel = viewModel()
+    val userType by sessionViewModel.userType.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
 
@@ -44,7 +46,6 @@ fun OffersHomeScreen(navController: NavHostController) {
     val context = LocalContext.current
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
 
-    // Location logic without permission request
     LaunchedEffect(Unit) {
         val fineGranted = ContextCompat.checkSelfPermission(
             context, Manifest.permission.ACCESS_FINE_LOCATION
@@ -71,14 +72,16 @@ fun OffersHomeScreen(navController: NavHostController) {
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    coroutineScope.launch {
-                        navController.navigate(Screen.AddOffer.route)
+            if (userType == UserType.SHOP) {
+                FloatingActionButton(
+                    onClick = {
+                        coroutineScope.launch {
+                            navController.navigate(Screen.AddOffer.route)
+                        }
                     }
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "Νέα Προσφορά")
                 }
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Νέα Προσφορά")
             }
         }
     ) { padding ->
@@ -126,9 +129,10 @@ fun OffersHomeScreen(navController: NavHostController) {
                 } else {
                     OffersListSection(
                         offers = offers,
-                        favorites = emptyList(),
-                        onToggleFavorite = {},
+                        favorites = viewModel.favoriteOfferIds.collectAsState().value.toList(),
+                        onToggleFavorite = { viewModel.toggleFavorite(it) },
                         navController = navController
+
                     )
                 }
             }

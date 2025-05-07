@@ -117,6 +117,15 @@ fun OffersTopBar(
                             onMenuExpand(false)
                         }
                     )
+
+                    // Μόνο για shops
+                    DropdownMenuItem(
+                        text = { Text("💳 Αγόρασε Προσφορά ή Συνδρομή") },
+                        onClick = {
+                            navController.navigate(Screen.OfferLimitExceeded.route)
+                            onMenuExpand(false)
+                        }
+                    )
                 }
 
                 UserType.UNKNOWN -> {
@@ -129,15 +138,6 @@ fun OffersTopBar(
                     )
                 }
             }
-
-            // ΝΕΟ Κουμπί για αγορά
-            DropdownMenuItem(
-                text = { Text("💳 Αγόρασε Προσφορά ή Συνδρομή") },
-                onClick = {
-                    navController.navigate(Screen.OfferLimitExceeded.route)
-                    onMenuExpand(false)
-                }
-            )
 
             DropdownMenuItem(
                 text = { Text("Βοήθεια") },

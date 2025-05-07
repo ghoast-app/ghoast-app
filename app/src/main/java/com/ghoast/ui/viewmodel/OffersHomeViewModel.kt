@@ -1,5 +1,3 @@
-// OffersHomeViewModel.kt - με filtering, sorting και απόσταση
-
 package com.ghoast.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
@@ -11,8 +9,6 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import com.ghoast.ui.viewmodel.SortMode
-
 
 class OffersHomeViewModel : ViewModel() {
 
@@ -28,16 +24,19 @@ class OffersHomeViewModel : ViewModel() {
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
+    private val _favoriteOfferIds = MutableStateFlow<Set<String>>(emptySet())
+    val favoriteOfferIds: StateFlow<Set<String>> = _favoriteOfferIds
+
     var selectedCategory: String? = null
     var selectedDistance: Int? = 10
     var selectedSortMode: SortMode = SortMode.DISTANCE
-
 
     var userLatitude: Double? = null
     var userLongitude: Double? = null
 
     init {
         fetchOffers()
+        fetchFavoriteOffers()
     }
 
     fun fetchOffers() {
@@ -91,6 +90,38 @@ class OffersHomeViewModel : ViewModel() {
         applyFilters()
     }
 
+    fun fetchFavoriteOffers() {
+        val uid = auth.currentUser?.uid ?: return
+        db.collection("users")
+            .document(uid)
+            .collection("favorite_offers")
+            .get()
+            .addOnSuccessListener { result ->
+                val ids = result.map { it.id }.toSet()
+                _favoriteOfferIds.value = ids
+            }
+    }
+
+    fun toggleFavorite(offerId: String) {
+        val uid = auth.currentUser?.uid ?: return
+        val favRef = db.collection("users")
+            .document(uid)
+            .collection("favorite_offers")
+            .document(offerId)
+
+        val currentFavorites = _favoriteOfferIds.value.toMutableSet()
+
+        if (currentFavorites.contains(offerId)) {
+            favRef.delete()
+            currentFavorites.remove(offerId)
+        } else {
+            favRef.set(mapOf("offerId" to offerId))
+            currentFavorites.add(offerId)
+        }
+
+        _favoriteOfferIds.value = currentFavorites
+    }
+
     private fun applyFilters() {
         val category = selectedCategory
         val distance = selectedDistance
@@ -110,7 +141,6 @@ class OffersHomeViewModel : ViewModel() {
             SortMode.NEWEST -> filtered.sortedByDescending { it.timestamp }
             SortMode.DISTANCE -> filtered.sortedBy { it.distanceKm ?: Double.MAX_VALUE }
         }
-
 
         _filteredOffers.value = filtered
     }

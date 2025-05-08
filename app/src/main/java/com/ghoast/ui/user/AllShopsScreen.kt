@@ -19,43 +19,32 @@ import com.ghoast.viewmodel.AllShopsViewModel
 import com.ghoast.viewmodel.FavoritesViewModel
 import com.google.android.gms.location.LocationServices
 import com.ghoast.ui.navigation.Screen
+import com.ghoast.viewmodel.ShopSortMode
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AllShopsScreen(navController: NavHostController) {
     val viewModel: AllShopsViewModel = viewModel()
     val favoritesViewModel: FavoritesViewModel = viewModel()
-    val shops by viewModel.shops.collectAsState()
+    val sortedShops by viewModel.sortedShops.collectAsState()
     val favorites by viewModel.favoriteShopIds.collectAsState()
 
     val context = LocalContext.current
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
-    val userLocation = remember { mutableStateOf<Location?>(null) }
 
     LaunchedEffect(Unit) {
         fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-            userLocation.value = location
+            location?.let {
+                viewModel.userLatitude = it.latitude
+                viewModel.userLongitude = it.longitude
+                viewModel.applySorting()
+            }
         }
     }
 
-    var selectedSort by remember { mutableStateOf("Αλφαβητικά") }
-    val sortOptions = listOf("Αλφαβητικά", "Νεότερα", "Απόσταση")
     var expandedSort by remember { mutableStateOf(false) }
-
-    val sortedShops = shops.sortedWith(
-        when (selectedSort) {
-            "Αλφαβητικά" -> compareBy { it.shopName }
-            "Νεότερα" -> compareByDescending { it.id }
-            "Απόσταση" -> compareBy {
-                val shopLocation = Location("shop").apply {
-                    latitude = it.latitude
-                    longitude = it.longitude
-                }
-                LocationUtils.calculateDistance(userLocation.value, shopLocation)
-            }
-            else -> compareBy { it.shopName }
-        }
-    )
+    val selectedSort = viewModel.selectedSortMode
+    val sortOptions = ShopSortMode.values().toList()
 
     Column(modifier = Modifier.fillMaxSize().padding(8.dp)) {
         Row(
@@ -68,7 +57,7 @@ fun AllShopsScreen(navController: NavHostController) {
             ) {
                 TextField(
                     readOnly = true,
-                    value = selectedSort,
+                    value = selectedSort.label,
                     onValueChange = {},
                     label = { Text("Ταξινόμηση") },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedSort) },
@@ -80,11 +69,11 @@ fun AllShopsScreen(navController: NavHostController) {
                     expanded = expandedSort,
                     onDismissRequest = { expandedSort = false }
                 ) {
-                    sortOptions.forEach { sort ->
+                    sortOptions.forEach { mode ->
                         DropdownMenuItem(
-                            text = { Text(sort) },
+                            text = { Text(mode.label) },
                             onClick = {
-                                selectedSort = sort
+                                viewModel.setSortMode(mode)
                                 expandedSort = false
                             }
                         )
@@ -96,42 +85,32 @@ fun AllShopsScreen(navController: NavHostController) {
         Spacer(modifier = Modifier.height(8.dp))
 
         if (sortedShops.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("🏬", style = MaterialTheme.typography.displayMedium)
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        "Δεν υπάρχουν καταστήματα διαθέσιμα.",
-                        style = MaterialTheme.typography.bodyLarge,
-                        textAlign = TextAlign.Center
-                    )
+                    Text("Δεν υπάρχουν καταστήματα διαθέσιμα.", textAlign = TextAlign.Center)
                 }
             }
         } else {
             LazyColumn {
                 items(sortedShops) { shop ->
-                    val distanceInKm = userLocation.value?.let {
-                        val shopLocation = Location("shop").apply {
-                            latitude = shop.latitude
-                            longitude = shop.longitude
-                        }
-                        LocationUtils.calculateDistance(it, shopLocation) / 1000f
-                    }
+                    val distance = if (viewModel.userLatitude != null && viewModel.userLongitude != null) {
+                        LocationUtils.calculateHaversineDistance(
+                            viewModel.userLatitude!!,
+                            viewModel.userLongitude!!,
+                            shop.latitude,
+                            shop.longitude
+                        )
+                    } else null
 
                     ShopCard(
                         shop = shop,
-                        isFavorite = favoritesViewModel.favoriteShops.collectAsState().value.any { it.id == shop.id },
+                        isFavorite = favorites.contains(shop.id),
                         onToggleFavorite = { favoritesViewModel.toggleFavoriteShop(shop.id) },
-                        distanceInKm = distanceInKm,
-                        onClick = {
-                            navController.navigate(Screen.ShopDetails.createRoute(shop.id))
-                        }
+                        distanceInKm = distance?.toFloat(),
+                        onClick = { navController.navigate(Screen.ShopDetails.createRoute(shop.id)) }
                     )
-
-
                     Divider()
                 }
             }

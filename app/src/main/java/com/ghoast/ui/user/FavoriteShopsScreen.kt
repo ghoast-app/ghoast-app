@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.ghoast.viewmodel.FavoritesViewModel
+import com.ghoast.viewmodel.FavoriteShopSortMode
 import com.ghoast.ui.navigation.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -20,27 +21,59 @@ fun FavoriteShopsScreen(
     navController: NavHostController,
     favoritesViewModel: FavoritesViewModel = viewModel()
 ) {
-    val favoriteShops by favoritesViewModel.favoriteShops.collectAsState()
+    val sortedFavoriteShops by favoritesViewModel.sortedFavoriteShops.collectAsState()
+    var selectedSort by remember { mutableStateOf(FavoriteShopSortMode.ALPHABETICAL) }
+    var expanded by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Αγαπημένα Καταστήματα") }
-            )
+            TopAppBar(title = { Text("Αγαπημένα Καταστήματα") })
         }
     ) { padding ->
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .padding(8.dp)
         ) {
-            if (favoriteShops.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
+            // 🔽 Dropdown για ταξινόμηση
+            ExposedDropdownMenuBox(
+                expanded = expanded,
+                onExpandedChange = { expanded = !expanded }
+            ) {
+                TextField(
+                    readOnly = true,
+                    value = selectedSort.label,
+                    onValueChange = {},
+                    label = { Text("Ταξινόμηση") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                    modifier = Modifier
+                        .menuAnchor()
+                        .fillMaxWidth()
+                )
+                ExposedDropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
                 ) {
+                    FavoriteShopSortMode.values().forEach { mode ->
+                        DropdownMenuItem(
+                            text = { Text(mode.label) },
+                            onClick = {
+                                selectedSort = mode
+                                favoritesViewModel.setFavoriteSortMode(mode)
+                                expanded = false
+                            }
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            if (sortedFavoriteShops.isEmpty()) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("\uD83C\uDFEA", style = MaterialTheme.typography.displayMedium)
+                        Text("🏪", style = MaterialTheme.typography.displayMedium)
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             "Δεν έχετε αγαπημένα καταστήματα ακόμα.",
@@ -50,12 +83,8 @@ fun FavoriteShopsScreen(
                     }
                 }
             } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(8.dp)
-                ) {
-                    items(favoriteShops) { shop ->
+                LazyColumn {
+                    items(sortedFavoriteShops) { shop ->
                         ShopCard(
                             shop = shop,
                             isFavorite = true,

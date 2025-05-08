@@ -12,7 +12,8 @@ data class Shop(
     val categories: List<String> = emptyList(),
     val latitude: Double = 0.0,
     val longitude: Double = 0.0,
-    val workingHours: List<WorkingHour> = emptyList()
+    val workingHours: List<WorkingHour> = emptyList(),
+    val lastOfferTimestamp: Long? = null
 
 
 )

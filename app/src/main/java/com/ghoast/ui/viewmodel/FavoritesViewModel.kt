@@ -10,7 +10,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import android.util.Log
+import com.ghoast.util.LocationUtils
+
+enum class FavoriteShopSortMode(val label: String) {
+    ALPHABETICAL("Αλφαβητικά"),
+    DISTANCE("Απόσταση"),
+    OFFERED_RECENTLY("Πρόσφατες Προσφορές")
+}
 
 class FavoritesViewModel : ViewModel() {
 
@@ -23,6 +29,14 @@ class FavoritesViewModel : ViewModel() {
 
     private val _favoriteShops = MutableStateFlow<List<Shop>>(emptyList())
     val favoriteShops: StateFlow<List<Shop>> = _favoriteShops
+
+    private val _sortedFavoriteShops = MutableStateFlow<List<Shop>>(emptyList())
+    val sortedFavoriteShops: StateFlow<List<Shop>> = _sortedFavoriteShops
+
+    var userLatitude: Double? = null
+    var userLongitude: Double? = null
+
+    private var currentSortMode: FavoriteShopSortMode = FavoriteShopSortMode.ALPHABETICAL
 
     init {
         loadFavoriteOffers()
@@ -70,6 +84,7 @@ class FavoritesViewModel : ViewModel() {
                 e.printStackTrace()
             }
             _favoriteShops.value = shops
+            applyFavoriteShopSorting()
         }
     }
 
@@ -125,5 +140,29 @@ class FavoritesViewModel : ViewModel() {
             }
             loadFavoriteShops()
         }
+    }
+
+    fun setFavoriteSortMode(mode: FavoriteShopSortMode) {
+        currentSortMode = mode
+        applyFavoriteShopSorting()
+    }
+
+    private fun applyFavoriteShopSorting() {
+        val lat = userLatitude
+        val lng = userLongitude
+
+        val sorted = when (currentSortMode) {
+            FavoriteShopSortMode.ALPHABETICAL -> _favoriteShops.value.sortedBy { it.shopName }
+            FavoriteShopSortMode.DISTANCE -> {
+                if (lat != null && lng != null) {
+                    _favoriteShops.value.sortedBy {
+                        LocationUtils.calculateHaversineDistance(lat, lng, it.latitude, it.longitude)
+                    }
+                } else _favoriteShops.value
+            }
+            FavoriteShopSortMode.OFFERED_RECENTLY -> _favoriteShops.value.sortedByDescending { it.lastOfferTimestamp ?: 0L }
+        }
+
+        _sortedFavoriteShops.value = sorted
     }
 }

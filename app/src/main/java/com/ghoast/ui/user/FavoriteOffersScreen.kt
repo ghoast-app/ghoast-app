@@ -12,7 +12,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.ghoast.ui.home.OfferCard
+import com.ghoast.viewmodel.FavoriteOfferSortMode
 import com.ghoast.viewmodel.FavoritesViewModel
+import com.ghoast.ui.navigation.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -20,7 +22,14 @@ fun FavoriteOffersScreen(
     navController: NavHostController,
     favoritesViewModel: FavoritesViewModel = viewModel()
 ) {
-    val favoriteOffers by favoritesViewModel.favoriteOffers.collectAsState()
+    val sortedOffers by favoritesViewModel.sortedFavoriteOffers.collectAsState()
+
+    var expanded by remember { mutableStateOf(false) }
+    var selectedSort by remember { mutableStateOf(FavoriteOfferSortMode.NEWEST) }
+
+    LaunchedEffect(Unit) {
+        favoritesViewModel.setFavoriteOfferSortMode(FavoriteOfferSortMode.NEWEST)
+    }
 
     Scaffold(
         topBar = {
@@ -29,12 +38,48 @@ fun FavoriteOffersScreen(
             )
         }
     ) { padding ->
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .padding(8.dp)
         ) {
-            if (favoriteOffers.isEmpty()) {
+            // 🔽 Dropdown Sorting
+            ExposedDropdownMenuBox(
+                expanded = expanded,
+                onExpandedChange = { expanded = !expanded }
+            ) {
+                TextField(
+                    readOnly = true,
+                    value = selectedSort.label,
+                    onValueChange = {},
+                    label = { Text("Ταξινόμηση κατά") },
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded)
+                    },
+                    modifier = Modifier.menuAnchor().fillMaxWidth()
+                )
+
+                ExposedDropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    FavoriteOfferSortMode.values().forEach { mode ->
+                        DropdownMenuItem(
+                            text = { Text(mode.label) },
+                            onClick = {
+                                selectedSort = mode
+                                favoritesViewModel.setFavoriteOfferSortMode(mode)
+                                expanded = false
+                            }
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            if (sortedOffers.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -50,18 +95,19 @@ fun FavoriteOffersScreen(
                     }
                 }
             } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(8.dp)
-                ) {
-                    items(favoriteOffers) { offer ->
+                LazyColumn {
+                    items(sortedOffers) { offer ->
                         OfferCard(
                             offer = offer,
                             isFavorite = true,
-                            onToggleFavorite = { favoritesViewModel.toggleFavoriteOffer(offer.id) },
-                            onClick = {}
+                            onToggleFavorite = {
+                                favoritesViewModel.toggleFavoriteOffer(offer.id)
+                            },
+                            onClick = {
+                                navController.navigate(Screen.OfferDetails.createRoute(offer.id))
+                            }
                         )
+                        Spacer(modifier = Modifier.height(8.dp))
                     }
                 }
             }

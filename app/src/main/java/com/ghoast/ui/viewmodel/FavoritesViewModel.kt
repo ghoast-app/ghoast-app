@@ -14,8 +14,14 @@ import com.ghoast.util.LocationUtils
 
 enum class FavoriteShopSortMode(val label: String) {
     ALPHABETICAL("Αλφαβητικά"),
-    DISTANCE("Απόσταση"),
-    OFFERED_RECENTLY("Πρόσφατες Προσφορές")
+    DISTANCE("Μικρότερη Απόσταση"),
+    OFFERED_RECENTLY("Πιο Πρόσφατες Προσφορές")
+}
+
+enum class FavoriteOfferSortMode(val label: String) {
+    NEWEST("Πιο Πρόσφατες"),
+    DISCOUNT("Μεγαλύτερη Έκπτωση"),
+    DISTANCE("Μικρότερη Απόσταση")
 }
 
 class FavoritesViewModel : ViewModel() {
@@ -33,10 +39,14 @@ class FavoritesViewModel : ViewModel() {
     private val _sortedFavoriteShops = MutableStateFlow<List<Shop>>(emptyList())
     val sortedFavoriteShops: StateFlow<List<Shop>> = _sortedFavoriteShops
 
+    private val _sortedFavoriteOffers = MutableStateFlow<List<Offer>>(emptyList())
+    val sortedFavoriteOffers: StateFlow<List<Offer>> = _sortedFavoriteOffers
+
     var userLatitude: Double? = null
     var userLongitude: Double? = null
 
     private var currentSortMode: FavoriteShopSortMode = FavoriteShopSortMode.ALPHABETICAL
+    private var currentOfferSortMode: FavoriteOfferSortMode = FavoriteOfferSortMode.NEWEST
 
     init {
         loadFavoriteOffers()
@@ -62,6 +72,7 @@ class FavoritesViewModel : ViewModel() {
                 e.printStackTrace()
             }
             _favoriteOffers.value = offers
+            applyFavoriteOfferSorting()
         }
     }
 
@@ -164,5 +175,33 @@ class FavoritesViewModel : ViewModel() {
         }
 
         _sortedFavoriteShops.value = sorted
+    }
+
+    fun setFavoriteOfferSortMode(mode: FavoriteOfferSortMode) {
+        currentOfferSortMode = mode
+        applyFavoriteOfferSorting()
+    }
+
+    private fun applyFavoriteOfferSorting() {
+        val lat = userLatitude
+        val lng = userLongitude
+
+        val sorted = when (currentOfferSortMode) {
+            FavoriteOfferSortMode.NEWEST -> _favoriteOffers.value.sortedByDescending { it.timestamp }
+            FavoriteOfferSortMode.DISCOUNT -> _favoriteOffers.value.sortedByDescending {
+                it.discount.replace("%", "").toIntOrNull() ?: 0
+            }
+            FavoriteOfferSortMode.DISTANCE -> {
+                if (lat != null && lng != null) {
+                    _favoriteOffers.value.sortedBy {
+                        LocationUtils.calculateHaversineDistance(
+                            lat, lng, it.latitude ?: 0.0, it.longitude ?: 0.0
+                        )
+                    }
+                } else _favoriteOffers.value
+            }
+        }
+
+        _sortedFavoriteOffers.value = sorted
     }
 }

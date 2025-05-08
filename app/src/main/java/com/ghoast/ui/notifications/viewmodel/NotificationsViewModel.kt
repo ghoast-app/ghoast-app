@@ -7,6 +7,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 data class NotificationItem(
     val id: String = "",
@@ -26,41 +27,82 @@ class NotificationsViewModel : ViewModel() {
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading
 
+    private val userId get() = auth.currentUser?.uid ?: ""
+
     init {
         loadNotifications()
     }
 
-    private fun loadNotifications() {
-        val userId = auth.currentUser?.uid ?: return
+    fun loadNotifications() {
+        if (userId.isBlank()) return
 
         _isLoading.value = true
+
+        viewModelScope.launch {
+            try {
+                val snapshot = db.collection("users")
+                    .document(userId)
+                    .collection("notifications")
+                    .orderBy("timestamp", com.google.firebase.firestore.Query.Direction.DESCENDING)
+                    .get()
+                    .await()
+
+                val list = snapshot.documents.mapNotNull { doc ->
+                    val data = doc.data ?: return@mapNotNull null
+                    NotificationItem(
+                        id = doc.id,
+                        title = data["title"] as? String ?: "",
+                        body = data["body"] as? String ?: "",
+                        timestamp = data["timestamp"] as? Long ?: 0L
+                    )
+                }
+                _notifications.value = list
+            } catch (e: Exception) {
+                _notifications.value = emptyList()
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    fun deleteNotification(notificationId: String) {
+        if (userId.isBlank()) return
 
         viewModelScope.launch {
             try {
                 db.collection("users")
                     .document(userId)
                     .collection("notifications")
-                    .orderBy("timestamp", com.google.firebase.firestore.Query.Direction.DESCENDING)
-                    .get()
-                    .addOnSuccessListener { result ->
-                        val list = result.documents.mapNotNull { doc ->
-                            val data = doc.data ?: return@mapNotNull null
-                            NotificationItem(
-                                id = doc.id,
-                                title = data["title"] as? String ?: "",
-                                body = data["body"] as? String ?: "",
-                                timestamp = data["timestamp"] as? Long ?: 0L
-                            )
-                        }
-                        _notifications.value = list
-                        _isLoading.value = false
-                    }
-                    .addOnFailureListener {
-                        _notifications.value = emptyList()
-                        _isLoading.value = false
-                    }
+                    .document(notificationId)
+                    .delete()
+                    .await()
+
+                _notifications.value = _notifications.value.filterNot { it.id == notificationId }
             } catch (e: Exception) {
-                _isLoading.value = false
+                // Handle error (log or notify)
+            }
+        }
+    }
+
+    fun clearAllNotifications() {
+        if (userId.isBlank()) return
+
+        viewModelScope.launch {
+            try {
+                val batch = db.batch()
+                val snapshot = db.collection("users")
+                    .document(userId)
+                    .collection("notifications")
+                    .get()
+                    .await()
+
+                snapshot.documents.forEach { doc ->
+                    batch.delete(doc.reference)
+                }
+                batch.commit().await()
+                _notifications.value = emptyList()
+            } catch (e: Exception) {
+                // Handle error
             }
         }
     }

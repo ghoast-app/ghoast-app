@@ -12,8 +12,8 @@ import kotlinx.coroutines.launch
 enum class ShopSortMode(val label: String) {
     ALPHABETICAL("Αλφαβητικά"),
     NEWEST("Νεότερα"),
-    DISTANCE("Απόσταση"),
-    OFFERED_RECENTLY("Πρόσφατες Προσφορές")
+    DISTANCE("Μικρότερη Απόσταση"),
+    OFFERED_RECENTLY("Καταστήματα Με Πρόσφατες Προσφορές")
 }
 
 class AllShopsViewModel : ViewModel() {

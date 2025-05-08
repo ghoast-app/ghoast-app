@@ -107,7 +107,7 @@ fun AllShopsScreen(navController: NavHostController) {
                     ShopCard(
                         shop = shop,
                         isFavorite = favorites.contains(shop.id),
-                        onToggleFavorite = { favoritesViewModel.toggleFavoriteShop(shop.id) },
+                        onToggleFavorite = { viewModel.toggleFavorite(shop.id) },
                         distanceInKm = distance?.toFloat(),
                         onClick = { navController.navigate(Screen.ShopDetails.createRoute(shop.id)) }
                     )

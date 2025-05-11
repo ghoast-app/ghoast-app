@@ -2,6 +2,8 @@ package com.ghoast.ui.shop
 
 import android.app.TimePickerDialog
 import android.net.Uri
+import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -41,6 +43,8 @@ fun EditShopProfileScreen(
     val shop by viewModel.shop.collectAsState()
     val scrollState = rememberScrollState()
 
+    Log.d("EditShopScreen", "🚀 Composable launched with shopId=$shopId")
+
     var shopName by remember { mutableStateOf("") }
     var shopCategory by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
@@ -51,10 +55,12 @@ fun EditShopProfileScreen(
     var longitude by remember { mutableStateOf(0.0) }
 
     LaunchedEffect(shopId) {
+        Log.d("EditShopScreen", "📡 Calling loadShopById with $shopId")
         viewModel.loadShopById(shopId)
     }
 
     LaunchedEffect(shop) {
+        Log.d("EditShopScreen", "🧾 shop loaded: ${shop?.shopName}")
         shopName = shop?.shopName ?: ""
         shopCategory = shop?.categories?.firstOrNull() ?: ""
         phone = shop?.phone ?: ""
@@ -234,7 +240,6 @@ fun EditShopProfileScreen(
                     }, cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), true).show()
                 }) {
                     Text("Έως: ${hour.to.orEmpty().ifEmpty { "--:--" }}")
-
                 }
             }
         }

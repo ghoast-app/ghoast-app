@@ -1,7 +1,8 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.ghoast.ui.offers
 
 import android.net.Uri
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -22,8 +23,6 @@ import coil.compose.rememberAsyncImagePainter
 import com.ghoast.viewmodel.EditOfferViewModel
 import kotlinx.coroutines.launch
 
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditOfferScreen(
     navController: NavController,
@@ -35,6 +34,7 @@ fun EditOfferScreen(
     val offer by viewModel.offer.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
+    val updateCompleted by viewModel.updateCompleted.collectAsState()
     val coroutineScope = rememberCoroutineScope()
 
     var title by remember { mutableStateOf("") }
@@ -43,24 +43,11 @@ fun EditOfferScreen(
     var category by remember { mutableStateOf("") }
     var newImageUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
 
-    var showDeleteDialog by remember { mutableStateOf(false) }
-
     val discountOptions = (10..90 step 5).map { "$it%" }
     val categoryOptions = listOf(
-        "Γυναικεία ένδυση",
-        "Γυναικεία υπόδηση",
-        "Ανδρική ένδυση",
-        "Ανδρική υπόδηση",
-        "Παιδική ένδυση",
-        "Παιδική υπόδηση",
-        "Αθλητική ένδυση",
-        "Αθλητική υπόδηση",
-        "Εσώρουχα",
-        "Καλλυντικά",
-        "Αξεσουάρ",
-        "Κοσμήματα",
-        "Οπτικά",
-        "Ρολόγια"
+        "Γυναικεία ένδυση", "Γυναικεία υπόδηση", "Ανδρική ένδυση", "Ανδρική υπόδηση",
+        "Παιδική ένδυση", "Παιδική υπόδηση", "Αθλητική ένδυση", "Αθλητική υπόδηση",
+        "Εσώρουχα", "Καλλυντικά", "Αξεσουάρ", "Κοσμήματα", "Οπτικά", "Ρολόγια"
     )
 
     val discountDropdownExpanded = remember { mutableStateOf(false) }
@@ -75,16 +62,30 @@ fun EditOfferScreen(
     }
 
     LaunchedEffect(offerId) {
-        Log.d("EditOfferScreen", "Loading offer with ID: $offerId")
         viewModel.loadOffer(offerId)
     }
 
-    offer?.let { currentOffer ->
-        if (title.isBlank()) title = currentOffer.title
-        if (description.isBlank()) description = currentOffer.description
-        if (discount.isBlank()) discount = currentOffer.discount
-        if (category.isBlank()) category = currentOffer.category
+    LaunchedEffect(updateCompleted) {
+        if (updateCompleted) {
+            Toast.makeText(context, "Η προσφορά ενημερώθηκε", Toast.LENGTH_SHORT).show()
+            navController.popBackStack()
+        }
+    }
 
+    LaunchedEffect(offer) {
+        offer?.let {
+            title = it.title
+            description = it.description
+            discount = it.discount
+            category = it.category
+        }
+    }
+
+    if (isLoading) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+    } else offer?.let { currentOffer ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -97,7 +98,8 @@ fun EditOfferScreen(
                 value = title,
                 onValueChange = { title = it },
                 label = { Text("Τίτλος") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
             )
 
             OutlinedTextField(
@@ -107,7 +109,6 @@ fun EditOfferScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // Discount Dropdown
             ExposedDropdownMenuBox(
                 expanded = discountDropdownExpanded.value,
                 onExpandedChange = { discountDropdownExpanded.value = !discountDropdownExpanded.value }
@@ -117,9 +118,7 @@ fun EditOfferScreen(
                     onValueChange = {},
                     readOnly = true,
                     label = { Text("Ποσοστό έκπτωσης") },
-                    trailingIcon = {
-                        ExposedDropdownMenuDefaults.TrailingIcon(discountDropdownExpanded.value)
-                    },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(discountDropdownExpanded.value) },
                     modifier = Modifier.menuAnchor().fillMaxWidth()
                 )
                 ExposedDropdownMenu(
@@ -138,7 +137,6 @@ fun EditOfferScreen(
                 }
             }
 
-            // Category Dropdown
             ExposedDropdownMenuBox(
                 expanded = categoryDropdownExpanded.value,
                 onExpandedChange = { categoryDropdownExpanded.value = !categoryDropdownExpanded.value }
@@ -148,9 +146,7 @@ fun EditOfferScreen(
                     onValueChange = {},
                     readOnly = true,
                     label = { Text("Κατηγορία") },
-                    trailingIcon = {
-                        ExposedDropdownMenuDefaults.TrailingIcon(categoryDropdownExpanded.value)
-                    },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(categoryDropdownExpanded.value) },
                     modifier = Modifier.menuAnchor().fillMaxWidth()
                 )
                 ExposedDropdownMenu(
@@ -171,22 +167,13 @@ fun EditOfferScreen(
 
             Text("Εικόνες προσφοράς", style = MaterialTheme.typography.titleMedium)
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (newImageUris.isNotEmpty()) {
-                    items(newImageUris) { uri ->
-                        Image(
-                            painter = rememberAsyncImagePainter(uri),
-                            contentDescription = null,
-                            modifier = Modifier.size(width = 250.dp, height = 160.dp)
-                        )
-                    }
-                } else {
-                    items(currentOffer.imageUrls) { url ->
-                        Image(
-                            painter = rememberAsyncImagePainter(url),
-                            contentDescription = null,
-                            modifier = Modifier.size(width = 250.dp, height = 160.dp)
-                        )
-                    }
+                val imagesToShow = if (newImageUris.isNotEmpty()) newImageUris.map { it.toString() } else currentOffer.imageUrls
+                items(imagesToShow) { urlOrUri ->
+                    Image(
+                        painter = rememberAsyncImagePainter(urlOrUri),
+                        contentDescription = null,
+                        modifier = Modifier.size(width = 250.dp, height = 160.dp)
+                    )
                 }
             }
 
@@ -196,73 +183,38 @@ fun EditOfferScreen(
 
             Button(
                 onClick = {
-                    coroutineScope.launch {
-                        val updatedOffer = currentOffer.copy(
-                            title = title,
-                            description = description,
-                            discount = discount,
-                            category = category
-                        )
-
-                        viewModel.updateOffer(
-                            offerId = offerId,
-                            updatedOffer = updatedOffer,
-                            newImageUris = newImageUris
-                        )
-                        Toast.makeText(context, "Η προσφορά ενημερώθηκε", Toast.LENGTH_SHORT).show()
-                        navController.popBackStack()
-                    }
+                    val updated = currentOffer.copy(
+                        title = title,
+                        description = description,
+                        discount = discount,
+                        category = category
+                    )
+                    viewModel.updateOffer(context, offerId, updated, newImageUris)
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Αποθήκευση αλλαγών")
             }
 
-            Button(
-                onClick = {
-                    Log.d("DEBUG_DELETE", "Κουμπί διαγραφής πατήθηκε")
-                    showDeleteDialog = true
-
-                },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-            ) {
-                Text("Διαγραφή προσφοράς")
+            currentOffer.id?.let { id ->
+                Button(
+                    onClick = {
+                        viewModel.deleteOffer(id) {
+                            Toast.makeText(context, "Η προσφορά διαγράφηκε", Toast.LENGTH_SHORT).show()
+                            navController.popBackStack()
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Διαγραφή προσφοράς")
+                }
             }
 
             if (errorMessage != null) {
                 Text(text = errorMessage ?: "", color = MaterialTheme.colorScheme.error)
             }
         }
-    }
-
-    if (showDeleteDialog) {
-        Log.d("DEBUG_DELETE", "Το showDeleteDialog είναι true – προσπαθεί να εμφανιστεί το AlertDialog")
-        AlertDialog(
-            onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Επιβεβαίωση διαγραφής") },
-            text = { Text("Είστε σίγουροι ότι θέλετε να διαγράψετε αυτή την προσφορά;") },
-            confirmButton = {
-                TextButton(onClick = {
-                    Log.d("EditOfferScreen", "Confirmed deletion")
-                    showDeleteDialog = false
-                    viewModel.deleteOffer(offerId) {
-                        Toast.makeText(context, "Η προσφορά διαγράφηκε", Toast.LENGTH_SHORT).show()
-                        navController.popBackStack()
-                    }
-                }) {
-                    Text("Ναι")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = {
-                    Log.d("EditOfferScreen", "Cancelled deletion")
-                    showDeleteDialog = false
-                }) {
-                    Text("Άκυρο")
-                }
-            }
-        )
     }
 
     if (offer == null && !isLoading) {

@@ -1,5 +1,6 @@
 package com.ghoast.ui.shop
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -14,26 +15,19 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
 import com.ghoast.ui.navigation.Screen
-import com.ghoast.viewmodel.ShopProfileViewModel
+import com.ghoast.viewmodel.EditShopProfileViewModel
 
 @Composable
 fun ShopProfileScreen(
     navController: NavHostController,
-    viewModel: ShopProfileViewModel = viewModel()
+    viewModel: EditShopProfileViewModel = viewModel()
 ) {
     val shop by viewModel.shop.collectAsState()
-    val isLoading by viewModel.isLoading.collectAsState()
     val scrollState = rememberScrollState()
 
     LaunchedEffect(Unit) {
-        viewModel.loadShopData()
-    }
-
-    if (isLoading) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
-        }
-        return
+        Log.d("ShopProfileScreen", "🚀 Calling loadShopById from profile screen")
+        viewModel.loadShopById(null)
     }
 
     if (shop == null) {
@@ -79,7 +73,7 @@ fun ShopProfileScreen(
 
         Button(
             onClick = {
-                navController.navigate(Screen.EditShopProfile.route)
+                navController.navigate(Screen.EditShop.createRoute(shop?.id ?: ""))
             },
             modifier = Modifier.fillMaxWidth()
         ) {

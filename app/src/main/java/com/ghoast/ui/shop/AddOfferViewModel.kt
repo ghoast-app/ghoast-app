@@ -58,20 +58,19 @@ class AddOfferViewModel : ViewModel() {
             try {
                 val shop = selectedShop.value ?: throw Exception("Δεν επιλέχθηκε κατάστημα")
 
-                // 🔹 Ανέβασμα εικόνων
                 val imageUrls = uploadImages(imageUris)
-
                 if (imageUrls.isEmpty()) {
                     throw Exception("Απέτυχε το ανέβασμα εικόνων")
                 }
 
-                // 🔹 Δημιουργία προσφοράς
                 val offer = hashMapOf(
                     "title" to title,
                     "description" to description,
                     "discount" to discount,
                     "category" to category,
                     "shopId" to shop.id,
+                    "shopOwnerId" to (auth.currentUser?.uid ?: ""), // ✅ Χρήση του συνδεδεμένου χρήστη
+
                     "shopName" to shop.shopName,
                     "profilePhotoUri" to shop.profilePhotoUri.orEmpty(),
                     "imageUrls" to imageUrls,
@@ -88,9 +87,7 @@ class AddOfferViewModel : ViewModel() {
                 offer["id"] = offerRef.id
                 offerRef.set(offer).await()
 
-                // 🔔 Cloud Function για push
                 callSendNotificationFunction(shop.id, shop.shopName, title)
-
                 onSuccess()
 
             } catch (e: Exception) {
@@ -121,23 +118,26 @@ class AddOfferViewModel : ViewModel() {
     private suspend fun uploadImages(imageUris: List<Uri>): List<String> = withContext(Dispatchers.IO) {
         val urls = mutableListOf<String>()
         val userId = auth.currentUser?.uid ?: throw Exception("Μη έγκυρος χρήστης")
+
         for (uri in imageUris) {
             val fileName = UUID.randomUUID().toString() + ".jpg"
-            val imageRef = storage.reference.child("offers/$userId/$fileName") // ✅ νέο path
+            val imageRef = storage.reference.child("offers/$userId/$fileName")
+
             try {
+                Log.d("UploadDebug", "Uploading to: offers/$userId/$fileName")
                 val uploadTask = imageRef.putFile(uri).await()
                 if (uploadTask.task.isSuccessful) {
                     val downloadUrl = imageRef.downloadUrl.await().toString()
-                    if (downloadUrl.isNotEmpty()) {
-                        urls.add(downloadUrl)
-                    }
+                    Log.d("UploadDebug", "✅ Upload success: $downloadUrl")
+                    urls.add(downloadUrl)
                 } else {
-                    Log.e("AddOfferViewModel", "❌ Upload failed for $uri")
+                    Log.e("UploadDebug", "❌ Upload failed: ${uploadTask.task.exception}")
                 }
             } catch (e: Exception) {
-                Log.e("AddOfferViewModel", "❌ Exception uploading image", e)
+                Log.e("UploadDebug", "❌ Exception uploading image", e)
             }
         }
+
         return@withContext urls
     }
 }

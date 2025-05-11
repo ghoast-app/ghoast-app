@@ -102,5 +102,6 @@ dependencies {
     implementation ("com.android.billingclient:billing:6.1.0")
     implementation ("com.google.accompanist:accompanist-swiperefresh:0.32.0")
     implementation("androidx.compose.foundation:foundation:1.6.0")
-
+    implementation ("androidx.test:core:1.5.0")
     }
+

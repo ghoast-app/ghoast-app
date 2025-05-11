@@ -56,8 +56,15 @@ class RegisterShopViewModel : ViewModel() {
                     shopData["profilePhotoUri"] = imageUrl
                 }
 
-                // 🔸 Δημιουργία νέου document με random ID (όχι uid)
-                db.collection("shops").add(shopData).await()
+                val newShopRef = db.collection("shops").document()
+                newShopRef.set(shopData).await()
+
+                val userData = hashMapOf(
+                    "uid" to uid,
+                    "email" to email,
+                    "type" to "SHOP"
+                )
+                db.collection("users").document(uid).set(userData).await()
 
                 onSuccess()
             } catch (e: Exception) {

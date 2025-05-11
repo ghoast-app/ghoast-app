@@ -27,13 +27,19 @@ class AllShopsViewModel : ViewModel() {
     private val _favoriteShopIds = MutableStateFlow<Set<String>>(emptySet())
     val favoriteShopIds: StateFlow<Set<String>> = _favoriteShopIds
 
+    private val _sortedShops = MutableStateFlow<List<Shop>>(emptyList())
+    val sortedShops: StateFlow<List<Shop>> = _sortedShops
+
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery
+
+    private val _filteredShops = MutableStateFlow<List<Shop>>(emptyList())
+    val filteredShops: StateFlow<List<Shop>> = _filteredShops
+
     var userLatitude: Double? = null
     var userLongitude: Double? = null
 
     var selectedSortMode: ShopSortMode = ShopSortMode.ALPHABETICAL
-
-    private val _sortedShops = MutableStateFlow<List<Shop>>(emptyList())
-    val sortedShops: StateFlow<List<Shop>> = _sortedShops
 
     init {
         fetchShops()
@@ -59,7 +65,7 @@ class AllShopsViewModel : ViewModel() {
             .collection("favorite_shops")
             .get()
             .addOnSuccessListener { result ->
-                val ids = result.map { it.id }.toSet()
+                val ids = result.map { it.getString("shopId") ?: "" }.toSet()
                 _favoriteShopIds.value = ids
             }
     }
@@ -111,5 +117,22 @@ class AllShopsViewModel : ViewModel() {
         }
 
         _sortedShops.value = sorted
+        applySearchFilter()
+    }
+
+    fun updateSearchQuery(query: String) {
+        _searchQuery.value = query
+        applySearchFilter()
+    }
+
+    private fun applySearchFilter() {
+        val query = _searchQuery.value.trim().lowercase()
+        _filteredShops.value = if (query.isBlank()) {
+            _sortedShops.value
+        } else {
+            _sortedShops.value.filter {
+                it.shopName.lowercase().contains(query)
+            }
+        }
     }
 }

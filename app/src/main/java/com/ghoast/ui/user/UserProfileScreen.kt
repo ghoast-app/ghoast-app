@@ -8,18 +8,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.firebase.auth.FirebaseAuth
-import com.ghoast.ui.session.UserSessionViewModel
 import com.ghoast.viewmodel.FavoritesViewModel
+import com.ghoast.viewmodel.UserType
+import com.ghoast.viewmodel.UserTypeViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserProfileScreen(
-    sessionViewModel: UserSessionViewModel = viewModel(),
+    userTypeViewModel: UserTypeViewModel = viewModel(),
     favoritesViewModel: FavoritesViewModel = viewModel()
 ) {
     val currentUser = FirebaseAuth.getInstance().currentUser
+    val userType by userTypeViewModel.userType.collectAsState()
 
-    if (currentUser == null) {
+    if (currentUser == null || userType == UserType.UNKNOWN) {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
@@ -29,12 +31,9 @@ fun UserProfileScreen(
         return
     }
 
-
-    // Dummy state για γλώσσα
     var selectedLanguage by remember { mutableStateOf("Ελληνικά") }
     val languageOptions = listOf("Ελληνικά", "Αγγλικά")
 
-    // Dummy state για Theme
     var darkMode by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -52,10 +51,10 @@ fun UserProfileScreen(
             verticalArrangement = Arrangement.spacedBy(24.dp),
             horizontalAlignment = Alignment.Start
         ) {
-            Text("👤 Email: ${currentUser?.email ?: "Άγνωστο"}")
-            Text("🆔 ID: ${currentUser?.uid ?: "Άγνωστο"}")
+            Text("👤 Email: ${currentUser.email ?: "Άγνωστο"}")
+            Text("🆔 ID: ${currentUser.uid ?: "Άγνωστο"}")
 
-            Button(onClick = { /* Μπορούμε να προσθέσουμε fetch/update user data */ }) {
+            Button(onClick = { /* Προσθήκη fetch/update user data αν χρειαστεί */ }) {
                 Text("🔄 Ανανέωση Στοιχείων")
             }
 
@@ -63,7 +62,6 @@ fun UserProfileScreen(
 
             Text("⚙️ Ρυθμίσεις", style = MaterialTheme.typography.titleMedium)
 
-            // Γλώσσα Dropdown
             ExposedDropdownMenuBox(
                 expanded = false,
                 onExpandedChange = {}
@@ -77,7 +75,6 @@ fun UserProfileScreen(
                 )
             }
 
-            // Light/Dark Mode Switch
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
@@ -94,7 +91,7 @@ fun UserProfileScreen(
 
             Button(
                 onClick = {
-                    sessionViewModel.logout()
+                    userTypeViewModel.logout()
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
             ) {

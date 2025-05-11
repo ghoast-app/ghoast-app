@@ -37,6 +37,7 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.widget.Autocomplete
 import com.google.android.libraries.places.widget.model.AutocompleteActivityMode
+import com.google.firebase.auth.FirebaseAuth
 import java.util.Calendar
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -62,20 +63,9 @@ fun RegisterShopScreen(navController: NavHostController) {
     }
 
     val categoryOptions = listOf(
-        "Γυναικεία ένδυση",
-        "Γυναικεία υπόδηση",
-        "Ανδρική ένδυση",
-        "Ανδρική υπόδηση",
-        "Παιδική ένδυση",
-        "Παιδική υπόδηση",
-        "Αθλητική ένδυση",
-        "Αθλητική υπόδηση",
-        "Εσώρουχα",
-        "Καλλυντικά",
-        "Αξεσουάρ",
-        "Κοσμήματα",
-        "Οπτικά",
-        "Ρολόγια"
+        "Γυναικεία ένδυση", "Γυναικεία υπόδηση", "Ανδρική ένδυση", "Ανδρική υπόδηση",
+        "Παιδική ένδυση", "Παιδική υπόδηση", "Αθλητική ένδυση", "Αθλητική υπόδηση",
+        "Εσώρουχα", "Καλλυντικά", "Αξεσουάρ", "Κοσμήματα", "Οπτικά", "Ρολόγια"
     )
 
     val selectedCategories = remember { mutableStateListOf<String>() }
@@ -98,10 +88,7 @@ fun RegisterShopScreen(navController: NavHostController) {
     val scrollState = rememberScrollState()
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(scrollState)
-            .padding(16.dp),
+        modifier = Modifier.fillMaxSize().verticalScroll(scrollState).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Spacer(modifier = Modifier.height(32.dp))
@@ -256,37 +243,43 @@ fun RegisterShopScreen(navController: NavHostController) {
         Button(
             onClick = {
                 isLoading = true
-                viewModel.registerShop(
-                    shopName = shopName,
-                    address = address,
-                    phone = phone,
-                    website = website,
-                    email = email,
-                    category = selectedCategories.joinToString(", "),
-                    workingHours = workingHours.map {
-                        mapOf(
-                            "day" to it.day,
-                            "from" to (it.from ?: ""),
-                            "to" to (it.to ?: "")
+                val auth = FirebaseAuth.getInstance()
+                auth.createUserWithEmailAndPassword(email, password)
+                    .addOnSuccessListener {
+                        viewModel.registerShop(
+                            shopName = shopName,
+                            address = address,
+                            phone = phone,
+                            website = website,
+                            email = email,
+                            category = selectedCategories.joinToString(", "),
+                            workingHours = workingHours.map {
+                                mapOf(
+                                    "day" to it.day,
+                                    "from" to (it.from ?: ""),
+                                    "to" to (it.to ?: "")
+                                )
+                            },
+                            profileImageUri = imageUri,
+                            latitude = latLng?.latitude ?: 0.0,
+                            longitude = latLng?.longitude ?: 0.0,
+                            onSuccess = {
+                                isLoading = false
+                                Toast.makeText(context, "Εγγραφή επιτυχής!", Toast.LENGTH_LONG).show()
+                                navController.navigate(Screen.Login.route) {
+                                    popUpTo(Screen.RegisterShop.route) { inclusive = true }
+                                }
+                            },
+                            onError = {
+                                isLoading = false
+                                Toast.makeText(context, "Σφάλμα: ${it.message}", Toast.LENGTH_LONG).show()
+                            }
                         )
-                    },
-                    profileImageUri = imageUri,
-                    latitude = latLng?.latitude ?: 0.0,
-                    longitude = latLng?.longitude ?: 0.0,
-                    onSuccess = {
-                        isLoading = false
-                        Toast.makeText(context, "Εγγραφή επιτυχής!", Toast.LENGTH_LONG).show()
-                        navController.navigate(Screen.Login.route) {
-                            popUpTo(Screen.RegisterShop.route) { inclusive = true }
-                        }
-                    },
-                    onError = {
+                    }
+                    .addOnFailureListener {
                         isLoading = false
                         Toast.makeText(context, "Σφάλμα: ${it.message}", Toast.LENGTH_LONG).show()
                     }
-                )
-
-
             },
             modifier = Modifier.fillMaxWidth(),
             enabled = !isLoading

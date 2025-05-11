@@ -17,5 +17,7 @@ data class Offer(
     val timestamp: Long = 0L,
     val latitude: Double? = null,
     val longitude: Double? = null,
-    var distanceFromUser: Double? = null
+    var distanceFromUser: Double? = null,
+    val shopOwnerId: String = ""
+
 )

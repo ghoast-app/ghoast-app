@@ -7,12 +7,14 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import com.ghoast.ui.navigation.GhoastNavGraph
 import com.ghoast.ui.theme.GhoastTheme
-import com.google.android.libraries.places.api.Places
-import com.ghoast.utils.FCMTokenUtils // ✅ import
+import com.ghoast.utils.FCMTokenUtils
+import com.ghoast.viewmodel.UserTypeViewModel
 import com.google.android.gms.maps.MapsInitializer
+import com.google.android.libraries.places.api.Places
 import com.google.firebase.auth.FirebaseAuth
 
 class MainActivity : ComponentActivity() {
@@ -31,8 +33,12 @@ class MainActivity : ComponentActivity() {
         setContent {
             GhoastTheme {
                 val navController = rememberNavController()
+                val userTypeViewModel: UserTypeViewModel = viewModel()
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    GhoastNavGraph(navController = navController)
+                    GhoastNavGraph(
+                        navController = navController,
+                        userTypeViewModel = userTypeViewModel
+                    )
                 }
             }
         }

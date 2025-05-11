@@ -7,6 +7,7 @@ import com.ghoast.model.Offer
 import com.ghoast.model.Shop
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -62,6 +63,7 @@ class MyShopOffersViewModel : ViewModel() {
             try {
                 val result = db.collection("offers")
                     .whereEqualTo("shopId", shopId)
+                    .orderBy("timestamp", Query.Direction.DESCENDING)
                     .get()
                     .await()
 

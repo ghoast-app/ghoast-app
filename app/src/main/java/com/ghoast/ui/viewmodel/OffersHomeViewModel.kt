@@ -30,6 +30,7 @@ class OffersHomeViewModel : ViewModel() {
     var selectedCategory: String? = null
     var selectedDistance: Int? = 10
     var selectedSortMode: SortMode = SortMode.DISTANCE
+    var searchQuery: String = ""
 
     var userLatitude: Double? = null
     var userLongitude: Double? = null
@@ -127,13 +128,20 @@ class OffersHomeViewModel : ViewModel() {
         val distance = selectedDistance
         val lat = userLatitude
         val lng = userLongitude
+        val query = searchQuery.trim().lowercase()
 
         var filtered = _offers.value.filter { offer ->
             val matchCategory = category == null || category == "Όλες οι κατηγορίες" || offer.category == category
             val matchDistance = if (lat != null && lng != null && distance != null) {
                 offer.distanceKm?.let { it <= distance } ?: true
             } else true
-            matchCategory && matchDistance
+            val matchSearch = query.isBlank() || listOf(
+                offer.shopName.lowercase(),
+                offer.title.lowercase(),
+                offer.description.lowercase()
+            ).any { it.contains(query) }
+
+            matchCategory && matchDistance && matchSearch
         }
 
         filtered = when (selectedSortMode) {

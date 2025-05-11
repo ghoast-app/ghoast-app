@@ -9,6 +9,7 @@ import com.ghoast.model.WorkingHour
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import android.util.Log
 
 class EditShopProfileViewModel : ViewModel() {
 
@@ -20,25 +21,32 @@ class EditShopProfileViewModel : ViewModel() {
 
     fun loadShopById(shopId: String?) {
         viewModelScope.launch {
-            if (shopId != null) {
+            Log.d("EditShopVM", "📡 loadShopById called with: $shopId")
+            if (shopId != null && shopId.isNotEmpty()) {
                 db.collection("shops").document(shopId).get()
                     .addOnSuccessListener { document ->
+                        Log.d("EditShopVM", "✅ loaded shop by ID: ${document.id}")
                         document?.toObject(Shop::class.java)?.let {
                             _shop.value = it.copy(id = document.id)
                         }
                     }
-            } else {
-                // Load first shop of current user
+            } else if (currentUserId != null) {
                 db.collection("shops")
                     .whereEqualTo("ownerId", currentUserId)
                     .limit(1)
                     .get()
                     .addOnSuccessListener { documents ->
                         val firstDoc = documents.firstOrNull()
+                        Log.d("EditShopVM", "✅ loaded shop by ownerId: ${firstDoc?.id}")
                         firstDoc?.toObject(Shop::class.java)?.let {
                             _shop.value = it.copy(id = firstDoc.id)
                         }
                     }
+                    .addOnFailureListener {
+                        Log.e("EditShopVM", "❌ Failed to load shop by ownerId", it)
+                    }
+            } else {
+                Log.e("EditShopVM", "❌ No shopId or userId provided")
             }
         }
     }
@@ -73,7 +81,15 @@ class EditShopProfileViewModel : ViewModel() {
             )
             db.collection("shops").document(id)
                 .update(updatedShop as Map<String, Any>)
-                .addOnSuccessListener { onSuccess() }
+                .addOnSuccessListener {
+                    Log.d("EditShopVM", "✅ Shop updated successfully")
+                    onSuccess()
+                }
+                .addOnFailureListener {
+                    Log.e("EditShopVM", "❌ Failed to update shop", it)
+                }
+        } else {
+            Log.e("EditShopVM", "❌ Cannot update: no valid shopId")
         }
     }
 }

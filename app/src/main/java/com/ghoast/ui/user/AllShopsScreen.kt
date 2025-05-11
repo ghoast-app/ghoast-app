@@ -20,6 +20,7 @@ import com.ghoast.viewmodel.FavoritesViewModel
 import com.google.android.gms.location.LocationServices
 import com.ghoast.ui.navigation.Screen
 import com.ghoast.viewmodel.ShopSortMode
+import com.ghoast.ui.user.ShopCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,6 +29,8 @@ fun AllShopsScreen(navController: NavHostController) {
     val favoritesViewModel: FavoritesViewModel = viewModel()
     val sortedShops by viewModel.sortedShops.collectAsState()
     val favorites by viewModel.favoriteShopIds.collectAsState()
+    val searchQuery by viewModel.searchQuery.collectAsState()
+    val filteredShops by viewModel.filteredShops.collectAsState()
 
     val context = LocalContext.current
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
@@ -84,7 +87,16 @@ fun AllShopsScreen(navController: NavHostController) {
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        if (sortedShops.isEmpty()) {
+        TextField(
+            value = searchQuery,
+            onValueChange = { viewModel.updateSearchQuery(it) },
+            placeholder = { Text("Αναζήτηση καταστήματος...") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        if (filteredShops.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("🏬", style = MaterialTheme.typography.displayMedium)
@@ -94,7 +106,7 @@ fun AllShopsScreen(navController: NavHostController) {
             }
         } else {
             LazyColumn {
-                items(sortedShops) { shop ->
+                items(filteredShops) { shop ->
                     val distance = if (viewModel.userLatitude != null && viewModel.userLongitude != null) {
                         LocationUtils.calculateHaversineDistance(
                             viewModel.userLatitude!!,

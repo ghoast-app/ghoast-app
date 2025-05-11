@@ -1,7 +1,13 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.ghoast.ui.home
 
 import android.Manifest
+import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.location.LocationManager
+import android.provider.Settings
 import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -28,7 +34,6 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OffersHomeScreen(navController: NavHostController) {
     val viewModel: OffersHomeViewModel = viewModel()
@@ -42,6 +47,8 @@ fun OffersHomeScreen(navController: NavHostController) {
 
     var menuExpanded by remember { mutableStateOf(false) }
     var showFiltersDialog by remember { mutableStateOf(false) }
+    var showGPSDialog by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
 
     val context = LocalContext.current
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
@@ -51,7 +58,10 @@ fun OffersHomeScreen(navController: NavHostController) {
             context, Manifest.permission.ACCESS_FINE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
 
-        if (fineGranted) {
+        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        val isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+
+        if (fineGranted && isGPSEnabled) {
             try {
                 fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
                     .addOnSuccessListener { location ->
@@ -64,6 +74,9 @@ fun OffersHomeScreen(navController: NavHostController) {
             } catch (e: Exception) {
                 Log.e("OffersHome", "Location error", e)
             }
+        } else if (!isGPSEnabled) {
+            showGPSDialog = true
+            viewModel.refreshOffers()
         } else {
             viewModel.refreshOffers()
         }
@@ -92,11 +105,16 @@ fun OffersHomeScreen(navController: NavHostController) {
         ) {
             OffersTopBar(
                 navController = navController,
-                sessionViewModel = sessionViewModel,
                 menuExpanded = menuExpanded,
                 onMenuExpand = { menuExpanded = it },
                 onShowHelp = { navController.navigate("help") },
                 onShowContact = { navController.navigate("contact") },
+                searchQuery = searchQuery,
+                onSearchQueryChange = {
+                    searchQuery = it
+                    viewModel.searchQuery = it
+                    viewModel.refreshOffers()
+                },
                 extraActions = {
                     IconButton(onClick = { showFiltersDialog = true }) {
                         Icon(Icons.Default.FilterList, contentDescription = "Φίλτρα")
@@ -114,13 +132,10 @@ fun OffersHomeScreen(navController: NavHostController) {
                         contentAlignment = Alignment.Center
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                "\uD83D\uDCED",
-                                style = MaterialTheme.typography.displayMedium
-                            )
+                            Text("📭", style = MaterialTheme.typography.displayMedium)
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = "Δεν υπάρχουν διαθέσιμες προσφορές",
+                                "Δεν υπάρχουν διαθέσιμες προσφορές",
                                 style = MaterialTheme.typography.bodyLarge,
                                 textAlign = TextAlign.Center
                             )
@@ -132,7 +147,6 @@ fun OffersHomeScreen(navController: NavHostController) {
                         favorites = viewModel.favoriteOfferIds.collectAsState().value.toList(),
                         onToggleFavorite = { viewModel.toggleFavorite(it) },
                         navController = navController
-
                     )
                 }
             }
@@ -154,6 +168,29 @@ fun OffersHomeScreen(navController: NavHostController) {
                     showFiltersDialog = false
                 },
                 onDismiss = { showFiltersDialog = false }
+            )
+        }
+
+        if (showGPSDialog) {
+            AlertDialog(
+                onDismissRequest = { showGPSDialog = false },
+                title = { Text("Απαιτείται GPS") },
+                text = {
+                    Text("Για να εμφανιστούν προσφορές κοντά σας, ενεργοποιήστε την τοποθεσία στη συσκευή σας.")
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+                        showGPSDialog = false
+                    }) {
+                        Text("Άνοιγμα ρυθμίσεων")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showGPSDialog = false }) {
+                        Text("Άκυρο")
+                    }
+                }
             )
         }
     }

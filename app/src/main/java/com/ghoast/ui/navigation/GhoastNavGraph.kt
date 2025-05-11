@@ -1,6 +1,8 @@
 package com.ghoast.ui.navigation
 
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -22,9 +24,17 @@ import com.ghoast.ui.register.RegisterUserScreen
 import com.ghoast.ui.shop.*
 import com.ghoast.ui.start.StartScreen
 import com.ghoast.ui.user.*
+import com.ghoast.viewmodel.UserTypeViewModel
+import com.ghoast.viewmodel.UserType
 
 @Composable
-fun GhoastNavGraph(navController: NavHostController) {
+fun GhoastNavGraph(
+    navController: NavHostController,
+    userTypeViewModel: UserTypeViewModel
+) {
+    val userType = userTypeViewModel.userType.collectAsState().value
+    val isLoading = userTypeViewModel.isLoading.collectAsState().value
+
     NavHost(
         navController = navController,
         startDestination = Screen.Start.route
@@ -43,22 +53,56 @@ fun GhoastNavGraph(navController: NavHostController) {
         composable(Screen.RegisterUser.route) { RegisterUserScreen(navController) }
         composable(Screen.RegisterShop.route) { RegisterShopScreen(navController) }
         composable(Screen.OffersHome.route) { OffersHomeScreen(navController) }
-        composable(Screen.AddOffer.route) { AddOfferScreen(navController) }
-        composable(Screen.MyShopOffers.route) { MyShopOffersScreen(navController) }
-        composable(Screen.ShopProfile.route) { ShopProfileScreen(navController) }
 
-        composable(Screen.EditShopProfile.route) {
-            EditShopProfileScreen(navController = navController)
+        composable(Screen.AddOffer.route) {
+            if (isLoading) {
+                Text("Φόρτωση...")
+            } else if (userType == UserType.SHOP) {
+                AddOfferScreen(navController)
+            } else {
+                Text("Δεν έχετε πρόσβαση σε αυτήν τη σελίδα.")
+            }
         }
-
+        composable(Screen.MyShopOffers.route) {
+            if (isLoading) {
+                Text("Φόρτωση...")
+            } else if (userType == UserType.SHOP) {
+                MyShopOffersScreen(navController)
+            } else {
+                Text("Δεν έχετε πρόσβαση σε αυτήν τη σελίδα.")
+            }
+        }
+        composable(Screen.ShopProfile.route) {
+            if (isLoading) {
+                Text("Φόρτωση...")
+            } else if (userType == UserType.SHOP) {
+                ShopProfileScreen(navController)
+            } else {
+                Text("Δεν έχετε πρόσβαση σε αυτήν τη σελίδα.")
+            }
+        }
+        composable(Screen.EditShopProfile.route) {
+            if (isLoading) {
+                Text("Φόρτωση...")
+            } else if (userType == UserType.SHOP) {
+                EditShopProfileScreen(navController = navController)
+            } else {
+                Text("Δεν έχετε πρόσβαση σε αυτήν τη σελίδα.")
+            }
+        }
         composable(
             route = Screen.EditShop.route,
             arguments = listOf(navArgument("shopId") { type = NavType.StringType })
         ) { backStackEntry ->
             val shopId = backStackEntry.arguments?.getString("shopId") ?: ""
-            EditShopProfileScreen(navController = navController, shopId = shopId)
+            if (isLoading) {
+                Text("Φόρτωση...")
+            } else if (userType == UserType.SHOP) {
+                EditShopProfileScreen(navController = navController, shopId = shopId)
+            } else {
+                Text("Δεν έχετε πρόσβαση σε αυτήν τη σελίδα.")
+            }
         }
-
         composable(
             route = Screen.OfferDetails.route,
             arguments = listOf(navArgument("offerId") { type = NavType.StringType })
@@ -66,15 +110,19 @@ fun GhoastNavGraph(navController: NavHostController) {
             val offerId = backStackEntry.arguments?.getString("offerId") ?: ""
             OfferDetailsScreen(navController = navController, offerId = offerId)
         }
-
         composable(
             route = Screen.EditOffer.route,
             arguments = listOf(navArgument("offerId") { type = NavType.StringType })
         ) { backStackEntry ->
             val offerId = backStackEntry.arguments?.getString("offerId") ?: ""
-            EditOfferScreen(navController = navController, offerId = offerId)
+            if (isLoading) {
+                Text("Φόρτωση...")
+            } else if (userType == UserType.SHOP) {
+                EditOfferScreen(navController = navController, offerId = offerId)
+            } else {
+                Text("Δεν έχετε πρόσβαση σε αυτήν τη σελίδα.")
+            }
         }
-
         composable(Screen.OffersMap.route) { OffersMapScreen(navController = navController) }
         composable(Screen.FavoriteShops.route) { FavoriteShopsScreen(navController = navController) }
         composable(Screen.FavoriteOffers.route) { FavoriteOffersScreen(navController = navController) }
@@ -83,9 +131,24 @@ fun GhoastNavGraph(navController: NavHostController) {
         composable("help") { HelpScreen() }
         composable("contact") { ContactScreen() }
         composable("notifications") { UserNotificationsScreen() }
-        composable(Screen.AddNewShop.route) { AddNewShopScreen(navController = navController) }
-        composable(Screen.MyShops.route) { MyShopsScreen(navController = navController) }
-
+        composable(Screen.AddNewShop.route) {
+            if (isLoading) {
+                Text("Φόρτωση...")
+            } else if (userType == UserType.SHOP) {
+                AddNewShopScreen(navController = navController)
+            } else {
+                Text("Δεν έχετε πρόσβαση σε αυτήν τη σελίδα.")
+            }
+        }
+        composable(Screen.MyShops.route) {
+            if (isLoading) {
+                Text("Φόρτωση...")
+            } else if (userType == UserType.SHOP) {
+                MyShopsScreen(navController = navController)
+            } else {
+                Text("Δεν έχετε πρόσβαση σε αυτήν τη σελίδα.")
+            }
+        }
         composable(Screen.OfferLimitExceeded.route) {
             OfferLimitExceededScreen(
                 billingViewModel = viewModel<BillingViewModel>(),
@@ -99,7 +162,6 @@ fun GhoastNavGraph(navController: NavHostController) {
                 }
             )
         }
-
         composable(
             route = Screen.ShopDetails.route,
             arguments = listOf(navArgument("shopId") { type = NavType.StringType })
@@ -107,7 +169,6 @@ fun GhoastNavGraph(navController: NavHostController) {
             val shopId = backStackEntry.arguments?.getString("shopId") ?: ""
             ShopDetailsScreen(shopId = shopId, navController = navController)
         }
-
         composable(
             route = Screen.ShopOffers.route,
             arguments = listOf(navArgument("shopId") { type = NavType.StringType })

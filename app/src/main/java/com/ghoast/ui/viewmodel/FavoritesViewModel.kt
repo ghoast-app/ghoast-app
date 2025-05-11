@@ -42,6 +42,18 @@ class FavoritesViewModel : ViewModel() {
     private val _sortedFavoriteOffers = MutableStateFlow<List<Offer>>(emptyList())
     val sortedFavoriteOffers: StateFlow<List<Offer>> = _sortedFavoriteOffers
 
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery
+
+    private val _shopSearchQuery = MutableStateFlow("")
+    val shopSearchQuery: StateFlow<String> = _shopSearchQuery
+
+    private val _filteredFavoriteOffers = MutableStateFlow<List<Offer>>(emptyList())
+    val filteredFavoriteOffers: StateFlow<List<Offer>> = _filteredFavoriteOffers
+
+    private val _filteredFavoriteShops = MutableStateFlow<List<Shop>>(emptyList())
+    val filteredFavoriteShops: StateFlow<List<Shop>> = _filteredFavoriteShops
+
     var userLatitude: Double? = null
     var userLongitude: Double? = null
 
@@ -175,6 +187,7 @@ class FavoritesViewModel : ViewModel() {
         }
 
         _sortedFavoriteShops.value = sorted
+        applyShopSearchFilter()
     }
 
     fun setFavoriteOfferSortMode(mode: FavoriteOfferSortMode) {
@@ -203,5 +216,41 @@ class FavoritesViewModel : ViewModel() {
         }
 
         _sortedFavoriteOffers.value = sorted
+        applyOfferSearchFilter()
+    }
+
+    fun updateSearchQuery(query: String) {
+        _searchQuery.value = query
+        applyOfferSearchFilter()
+    }
+
+    private fun applyOfferSearchFilter() {
+        val query = _searchQuery.value.trim().lowercase()
+
+        _filteredFavoriteOffers.value = if (query.isBlank()) {
+            _sortedFavoriteOffers.value
+        } else {
+            _sortedFavoriteOffers.value.filter {
+                it.title.lowercase().contains(query) ||
+                        it.description.lowercase().contains(query)
+            }
+        }
+    }
+
+    fun updateShopSearchQuery(query: String) {
+        _shopSearchQuery.value = query
+        applyShopSearchFilter()
+    }
+
+    private fun applyShopSearchFilter() {
+        val query = _shopSearchQuery.value.trim().lowercase()
+
+        _filteredFavoriteShops.value = if (query.isBlank()) {
+            _sortedFavoriteShops.value
+        } else {
+            _sortedFavoriteShops.value.filter {
+                it.shopName.lowercase().contains(query)
+            }
+        }
     }
 }

@@ -4,8 +4,6 @@ import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -40,17 +38,7 @@ fun MyShopOffersScreen(navController: NavHostController) {
         }
     }
 
-    Scaffold(
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    navController.navigate(Screen.AddNewShop.route)
-                }
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Νέο Κατάστημα")
-            }
-        }
-    ) { paddingValues ->
+    Scaffold { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -86,6 +74,18 @@ fun MyShopOffersScreen(navController: NavHostController) {
                             }
                         )
                     }
+                }
+            }
+
+            selectedShop?.let { shop ->
+                Spacer(modifier = Modifier.height(12.dp))
+                TextButton(
+                    onClick = {
+                        navController.navigate(Screen.EditShop.createRoute(shop.id ?: ""))
+                    },
+                    modifier = Modifier.align(Alignment.End)
+                ) {
+                    Text("✏ Επεξεργασία Καταστήματος")
                 }
             }
 

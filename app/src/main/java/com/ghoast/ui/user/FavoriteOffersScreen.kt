@@ -22,7 +22,8 @@ fun FavoriteOffersScreen(
     navController: NavHostController,
     favoritesViewModel: FavoritesViewModel = viewModel()
 ) {
-    val sortedOffers by favoritesViewModel.sortedFavoriteOffers.collectAsState()
+    val filteredOffers by favoritesViewModel.filteredFavoriteOffers.collectAsState()
+    val searchQuery by favoritesViewModel.searchQuery.collectAsState()
 
     var expanded by remember { mutableStateOf(false) }
     var selectedSort by remember { mutableStateOf(FavoriteOfferSortMode.NEWEST) }
@@ -79,7 +80,19 @@ fun FavoriteOffersScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            if (sortedOffers.isEmpty()) {
+            // 🔍 SearchBar
+            TextField(
+                value = searchQuery,
+                onValueChange = { favoritesViewModel.updateSearchQuery(it) },
+                placeholder = { Text("Αναζήτηση προσφοράς...") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp)
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            if (filteredOffers.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -96,7 +109,7 @@ fun FavoriteOffersScreen(
                 }
             } else {
                 LazyColumn {
-                    items(sortedOffers) { offer ->
+                    items(filteredOffers) { offer ->
                         OfferCard(
                             offer = offer,
                             isFavorite = true,

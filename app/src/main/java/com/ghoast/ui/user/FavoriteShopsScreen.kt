@@ -14,6 +14,7 @@ import androidx.navigation.NavHostController
 import com.ghoast.viewmodel.FavoritesViewModel
 import com.ghoast.viewmodel.FavoriteShopSortMode
 import com.ghoast.ui.navigation.Screen
+import com.ghoast.ui.user.ShopCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -21,7 +22,8 @@ fun FavoriteShopsScreen(
     navController: NavHostController,
     favoritesViewModel: FavoritesViewModel = viewModel()
 ) {
-    val sortedFavoriteShops by favoritesViewModel.sortedFavoriteShops.collectAsState()
+    val filteredShops by favoritesViewModel.filteredFavoriteShops.collectAsState()
+    val searchQuery by favoritesViewModel.shopSearchQuery.collectAsState()
     var selectedSort by remember { mutableStateOf(FavoriteShopSortMode.ALPHABETICAL) }
     var expanded by remember { mutableStateOf(false) }
 
@@ -70,7 +72,19 @@ fun FavoriteShopsScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            if (sortedFavoriteShops.isEmpty()) {
+            // 🔍 SearchBar για καταστήματα
+            TextField(
+                value = searchQuery,
+                onValueChange = { favoritesViewModel.updateShopSearchQuery(it) },
+                placeholder = { Text("Αναζήτηση καταστήματος...") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp)
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            if (filteredShops.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("🏪", style = MaterialTheme.typography.displayMedium)
@@ -84,7 +98,7 @@ fun FavoriteShopsScreen(
                 }
             } else {
                 LazyColumn {
-                    items(sortedFavoriteShops) { shop ->
+                    items(filteredShops) { shop ->
                         ShopCard(
                             shop = shop,
                             isFavorite = true,

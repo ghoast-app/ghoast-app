@@ -5,7 +5,9 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.material3.*
+import androidx.compose.material3.AssistChip
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -56,7 +58,20 @@ fun ShopProfileScreen(
         }
 
         Text("Όνομα: ${shop?.shopName}", style = MaterialTheme.typography.titleLarge)
-        Text("Κατηγορία: ${shop?.categories?.joinToString()}")
+
+        Text("Κατηγορίες:", style = MaterialTheme.typography.titleMedium)
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            shop?.categories?.forEach { category ->
+                AssistChip(
+                    onClick = {},
+                    label = { Text(category) }
+                )
+            }
+        }
+
         Text("Διεύθυνση: ${shop?.address}")
         Text("Τηλέφωνο: ${shop?.phone}")
         Text("Ιστοσελίδα: ${shop?.website}")

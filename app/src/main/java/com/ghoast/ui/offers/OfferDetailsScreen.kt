@@ -7,8 +7,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -21,6 +19,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.ghoast.viewmodel.OfferDetailsViewModel
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 
 @Composable
 fun OfferDetailsScreen(
@@ -82,6 +83,19 @@ fun OfferDetailsScreen(
 
             Text("Κατάστημα", style = MaterialTheme.typography.titleMedium)
             Text(currentShop.shopName)
+
+            // ✅ Κατηγορίες Καταστήματος ως Chips
+            if (!currentShop.categories.isNullOrEmpty()) {
+                Text("Κατηγορίες:", style = MaterialTheme.typography.bodySmall)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    currentShop.categories.forEach { cat ->
+                        AssistChip(
+                            onClick = {},
+                            label = { Text(cat) }
+                        )
+                    }
+                }
+            }
 
             Text(
                 text = currentShop.address,

@@ -27,9 +27,6 @@ class OfferDetailsViewModel : ViewModel() {
                 if (shopId != null) {
                     db.collection("shops").document(shopId).get()
                         .addOnSuccessListener { shopSnapshot ->
-                            val shop = shopSnapshot.toObject(Shop::class.java)
-
-                            // ✅ Μετατροπή workingHours από Firestore
                             val workingHoursList = (shopSnapshot["workingHours"] as? List<Map<String, Any>>)?.mapNotNull { map ->
                                 val day = map["day"] as? String ?: return@mapNotNull null
                                 val from = map["from"] as? String
@@ -38,7 +35,18 @@ class OfferDetailsViewModel : ViewModel() {
                                 WorkingHour(day = day, from = from, to = to, enabled = enabled)
                             } ?: emptyList()
 
-                            shopState.value = shop?.copy(workingHours = workingHoursList)
+                            val categories = if (shopSnapshot.contains("categories")) {
+                                shopSnapshot.get("categories") as? List<String> ?: emptyList()
+                            } else {
+                                shopSnapshot.getString("category")?.split(",")?.map { it.trim() } ?: emptyList()
+                            }
+
+                            val shop = shopSnapshot.toObject(Shop::class.java)?.copy(
+                                workingHours = workingHoursList,
+                                categories = categories
+                            )
+
+                            shopState.value = shop
                             isLoading.value = false
                         }
                         .addOnFailureListener {

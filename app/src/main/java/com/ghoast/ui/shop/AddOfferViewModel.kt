@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ghoast.model.Shop
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.functions.FirebaseFunctions
 import com.google.firebase.storage.FirebaseStorage
@@ -57,24 +58,26 @@ class AddOfferViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val shop = selectedShop.value ?: throw Exception("Δεν επιλέχθηκε κατάστημα")
+                val currentUser = auth.currentUser ?: throw Exception("Η σύνδεση έχει λήξει, συνδεθείτε ξανά.")
 
                 val imageUrls = uploadImages(imageUris)
                 if (imageUrls.isEmpty()) {
                     throw Exception("Απέτυχε το ανέβασμα εικόνων")
                 }
 
+                val offerRef = db.collection("offers").document()
                 val offer = hashMapOf(
+                    "id" to offerRef.id,
                     "title" to title,
                     "description" to description,
                     "discount" to discount,
                     "category" to category,
                     "shopId" to shop.id,
-                    "shopOwnerId" to (auth.currentUser?.uid ?: ""), // ✅ Χρήση του συνδεδεμένου χρήστη
-
+                    "shopOwnerId" to currentUser.uid,
                     "shopName" to shop.shopName,
                     "profilePhotoUri" to shop.profilePhotoUri.orEmpty(),
                     "imageUrls" to imageUrls,
-                    "timestamp" to System.currentTimeMillis(),
+                    "timestamp" to FieldValue.serverTimestamp(),
                     "distanceKm" to 1,
                     "isNew" to true,
                     "endsSoon" to false,
@@ -83,10 +86,9 @@ class AddOfferViewModel : ViewModel() {
                     "longitude" to (shop.longitude ?: 0.0),
                 )
 
-                val offerRef = db.collection("offers").document()
-                offer["id"] = offerRef.id
-                offerRef.set(offer).await()
+                Log.d("DEBUG_FIRESTORE", "Uploading offer: shopOwnerId=${currentUser.uid}, shopId=${shop.id}")
 
+                offerRef.set(offer).await()
                 callSendNotificationFunction(shop.id, shop.shopName, title)
                 onSuccess()
 

@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -28,7 +29,6 @@ fun MyShopsScreen(navController: NavHostController) {
     val isLoading by viewModel.isLoading.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
 
-    // 🧨 Διαχείριση διαλόγου διαγραφής
     var showDeleteDialog by remember { mutableStateOf(false) }
     var selectedShopId by remember { mutableStateOf<String?>(null) }
 
@@ -61,8 +61,24 @@ fun MyShopsScreen(navController: NavHostController) {
                             elevation = CardDefaults.elevatedCardElevation(4.dp)
                         ) {
                             Column(modifier = Modifier.padding(16.dp)) {
-                                Text(shop.shopName ?: "(Χωρίς Όνομα)", style = MaterialTheme.typography.titleMedium)
-                                Text(shop.address ?: "(Χωρίς Διεύθυνση)", style = MaterialTheme.typography.bodySmall)
+                                Text(shop.shopName.ifBlank { "(Χωρίς Όνομα)" }, style = MaterialTheme.typography.titleMedium)
+                                Text(shop.address.ifBlank { "(Χωρίς Διεύθυνση)" }, style = MaterialTheme.typography.bodySmall)
+
+                                if (shop.categories.isNotEmpty()) {
+                                    FlowRow(
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                                        modifier = Modifier.padding(top = 8.dp)
+                                    ) {
+                                        shop.categories.forEach { category ->
+                                            AssistChip(
+                                                onClick = {},
+                                                label = { Text(category) }
+                                            )
+                                        }
+                                    }
+                                }
+
                                 Row(
                                     horizontalArrangement = Arrangement.End,
                                     modifier = Modifier.fillMaxWidth()
@@ -85,7 +101,6 @@ fun MyShopsScreen(navController: NavHostController) {
                     }
                 }
 
-                // 🔒 AlertDialog επιβεβαίωσης διαγραφής
                 if (showDeleteDialog && selectedShopId != null) {
                     AlertDialog(
                         onDismissRequest = { showDeleteDialog = false },

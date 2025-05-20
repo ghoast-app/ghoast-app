@@ -25,33 +25,53 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import com.ghoast.ui.components.RecommendedOffersSection
 import com.ghoast.ui.navigation.Screen
 import com.ghoast.ui.session.UserSessionViewModel
 import com.ghoast.ui.session.UserType
 import com.ghoast.ui.viewmodel.OffersHomeViewModel
+import com.ghoast.viewmodel.RecommendationViewModel
 import com.ghoast.ui.viewmodel.SortMode
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import kotlinx.coroutines.launch
 
 @Composable
-fun OffersHomeScreen(navController: NavHostController) {
+fun OffersHomeScreen(
+    navController: NavHostController,
+    sessionViewModel: UserSessionViewModel
+) {
     val viewModel: OffersHomeViewModel = viewModel()
+    val recommendationViewModel: RecommendationViewModel = viewModel()
+
     val offers by viewModel.filteredOffers.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
 
-    val sessionViewModel: UserSessionViewModel = viewModel()
     val userType by sessionViewModel.userType.collectAsState()
+    val isLoggedIn by sessionViewModel.isLoggedIn.collectAsState()
+
+    LaunchedEffect(viewModel.userLatitude, viewModel.userLongitude, userType, isLoggedIn) {
+        Log.d("DEBUG_SESSION", "🔍 userType = $userType, isLoggedIn = $isLoggedIn")
+        recommendationViewModel.userLatitude = viewModel.userLatitude
+        recommendationViewModel.userLongitude = viewModel.userLongitude
+
+        if (userType == UserType.USER && isLoggedIn) {
+            Log.d("DEBUG_SESSION", "✅ Loading recommended offers...")
+            recommendationViewModel.loadRecommendedOffers()
+        } else {
+            Log.d("DEBUG_SESSION", "⛔ Not loading recommended offers (wrong type or not logged in)")
+        }
+    }
+
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
 
     var menuExpanded by remember { mutableStateOf(false) }
     var showFiltersDialog by remember { mutableStateOf(false) }
     var showGPSDialog by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
-
-    val context = LocalContext.current
-    val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
 
     LaunchedEffect(Unit) {
         val fineGranted = ContextCompat.checkSelfPermission(
@@ -122,15 +142,23 @@ fun OffersHomeScreen(navController: NavHostController) {
                 }
             )
 
+            if (userType == UserType.USER && isLoggedIn) {
+                RecommendedOffersSection(
+                    viewModel = recommendationViewModel,
+                    onOfferClick = { offer ->
+                        navController.navigate(Screen.OfferDetails.createRoute(offer.id ?: ""))
+                    }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             SwipeRefresh(
                 state = rememberSwipeRefreshState(isRefreshing = isLoading),
                 onRefresh = { viewModel.refreshOffers() }
             ) {
                 if (offers.isEmpty() && !isLoading) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text("📭", style = MaterialTheme.typography.displayMedium)
                             Spacer(modifier = Modifier.height(8.dp))

@@ -12,12 +12,20 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.ghoast.ui.navigation.Screen
+import com.ghoast.ui.session.UserSessionViewModel
 import com.ghoast.utils.FCMTokenUtils
-import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
-fun LoginScreen(navController: NavHostController, viewModel: LoginViewModel = viewModel()) {
+fun LoginScreen(
+    navController: NavHostController,
+    sessionViewModel: UserSessionViewModel,
+    viewModel: LoginViewModel = viewModel()
+) {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     val isLoading by viewModel.isLoading.collectAsState()
@@ -63,19 +71,40 @@ fun LoginScreen(navController: NavHostController, viewModel: LoginViewModel = vi
                 Button(
                     onClick = {
                         if (email.isNotBlank() && password.isNotBlank()) {
-                            viewModel.loginUser(email, password, onSuccess = {
-                                Toast.makeText(context, "✅ Είσοδος επιτυχής", Toast.LENGTH_SHORT).show()
+                            viewModel.loginUser(
+                                email,
+                                password,
+                                onSuccess = {
+                                    Toast.makeText(
+                                        context,
+                                        "✅ Είσοδος επιτυχής",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
 
-                                FCMTokenUtils.updateFCMToken()
+                                    FCMTokenUtils.updateFCMToken()
+                                    sessionViewModel.refreshUserStatus()
 
-                                navController.navigate(Screen.OffersHome.route) {
-                                    popUpTo(Screen.Login.route) { inclusive = true }
+                                    coroutineScope.launch {
+                                        delay(300) // Μικρή καθυστέρηση για να ενημερωθεί ο userType
+                                        navController.navigate(Screen.OffersHome.route) {
+                                            popUpTo(Screen.Login.route) { inclusive = true }
+                                        }
+                                    }
+                                },
+                                onFailure = { error ->
+                                    Toast.makeText(
+                                        context,
+                                        "❌ Αποτυχία σύνδεσης: $error",
+                                        Toast.LENGTH_LONG
+                                    ).show()
                                 }
-                            }, onFailure = { error ->
-                                Toast.makeText(context, "❌ Αποτυχία σύνδεσης: $error", Toast.LENGTH_LONG).show()
-                            })
+                            )
                         } else {
-                            Toast.makeText(context, "Συμπληρώστε email και κωδικό", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(
+                                context,
+                                "Συμπληρώστε email και κωδικό",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         }
                     },
                     modifier = Modifier.fillMaxWidth()

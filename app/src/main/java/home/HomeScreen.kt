@@ -19,7 +19,7 @@ fun HomeScreen() {
         ) {
             Text("Καλώς ήρθες στην Ghoast App!", style = MaterialTheme.typography.headlineMedium)
             Spacer(modifier = Modifier.height(16.dp))
-            Text("Αυτή είναι η αρχική οθόνη μετά από επιτυχημένο login.")
+            Text("Αυτή είναι μια προσωρινή οθόνη καλωσορίσματος.")
         }
     }
 }

@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
-// ✅ Enum για τον τύπο χρήστη
 enum class UserType {
     USER, SHOP, UNKNOWN
 }
@@ -31,6 +30,10 @@ class UserSessionViewModel : ViewModel() {
         checkUserStatus()
     }
 
+    fun refreshUserStatus() {
+        checkUserStatus()
+    }
+
     private fun checkUserStatus() {
         val user = auth.currentUser
         _isLoggedIn.value = user != null
@@ -39,31 +42,36 @@ class UserSessionViewModel : ViewModel() {
         user?.uid?.let { uid ->
             viewModelScope.launch {
                 try {
-                    val userDoc = db.collection("users").document(uid).get().await()
-                    Log.d("SESSION_CHECK", "userDoc.exists = ${userDoc.exists()}")
+                    // 🔄 Νέος ενοποιημένος έλεγχος
+                    val shopSnapshot = db.collection("shops")
+                        .whereEqualTo("ownerId", uid)
+                        .limit(1)
+                        .get()
+                        .await()
 
-                    if (userDoc.exists()) {
-                        _userType.value = UserType.USER
-                        Log.d("SESSION_CHECK", "✅ UserType set to USER")
-
-                        // ✅ Αποθήκευση FCM token για χρήστη
-                        saveFcmToken(uid)
-                        return@launch
-                    }
-
-                    val shopDoc = db.collection("shops").document(uid).get().await()
-                    Log.d("SESSION_CHECK", "shopDoc.exists = ${shopDoc.exists()}")
-
-                    if (shopDoc.exists()) {
+                    if (!shopSnapshot.isEmpty) {
                         _userType.value = UserType.SHOP
                         Log.d("SESSION_CHECK", "✅ UserType set to SHOP")
                         return@launch
                     }
 
+                    val userSnapshot = db.collection("users")
+                        .document(uid)
+                        .get()
+                        .await()
+
+                    if (userSnapshot.exists()) {
+                        _userType.value = UserType.USER
+                        Log.d("SESSION_CHECK", "✅ UserType set to USER")
+                        saveFcmToken(uid)
+                        return@launch
+                    }
+
                     _userType.value = UserType.UNKNOWN
-                    Log.d("SESSION_CHECK", "⛔ UserType set to UNKNOWN (not found)")
+                    Log.d("SESSION_CHECK", "⛔ UserType set to UNKNOWN")
                 } catch (e: Exception) {
                     Log.e("SESSION_CHECK", "❌ Exception: ${e.message}", e)
+                    _userType.value = UserType.UNKNOWN
                 }
             }
         }

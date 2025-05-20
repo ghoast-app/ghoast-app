@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import com.ghoast.ui.navigation.GhoastNavGraph
+import com.ghoast.ui.session.UserSessionViewModel
 import com.ghoast.ui.theme.GhoastTheme
 import com.ghoast.utils.FCMTokenUtils
 import com.ghoast.viewmodel.UserTypeViewModel
@@ -34,10 +35,11 @@ class MainActivity : ComponentActivity() {
             GhoastTheme {
                 val navController = rememberNavController()
                 val userTypeViewModel: UserTypeViewModel = viewModel()
+                val sessionViewModel: UserSessionViewModel = viewModel()
                 Surface(modifier = Modifier.fillMaxSize()) {
                     GhoastNavGraph(
                         navController = navController,
-                        userTypeViewModel = userTypeViewModel
+                        sessionViewModel = sessionViewModel
                     )
                 }
             }

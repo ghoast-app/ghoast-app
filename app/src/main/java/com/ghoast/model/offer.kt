@@ -1,23 +1,24 @@
 package com.ghoast.model
 
+import com.google.firebase.Timestamp
+
 data class Offer(
     val id: String = "",
-    val shopName: String = "",           // ✅ Όνομα καταστήματος
-    val profilePhotoUri: String = "", // ✅ Εικόνα προφίλ καταστήματος
-    val title: String = "",              // ✅ Τίτλος προσφοράς
-    val description: String = "",        // ✅ Περιγραφή
-    val category: String = "",           // ✅ Κατηγορία
-    val discount: String = "",           // ✅ Ποσοστό έκπτωσης
-    var distanceKm: Double? = null ,// ✅ Απόσταση
-    val isNew: Boolean = false,          // ✅ Σήμανση ΝΕΟ
-    val endsSoon: Boolean = false,       // ✅ Σήμανση λήξης
+    val shopName: String = "",
+    val profilePhotoUri: String = "",
+    val title: String = "",
+    val description: String = "",
+    val category: String = "",
+    val discount: String = "",
+    var distanceKm: Double? = null,
+    val isNew: Boolean = false,
+    val endsSoon: Boolean = false,
     val shopId: String = "",
     val imageUrls: List<String> = emptyList(),
     val location: String = "",
-    val timestamp: Long = 0L,
+    val timestamp: Timestamp? = null,  // ✅ ΤΥΠΟΣ ΣΩΣΤΟΣ
     val latitude: Double? = null,
     val longitude: Double? = null,
     var distanceFromUser: Double? = null,
     val shopOwnerId: String = ""
-
 )

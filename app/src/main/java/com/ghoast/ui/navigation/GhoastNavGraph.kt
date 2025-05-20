@@ -24,16 +24,15 @@ import com.ghoast.ui.register.RegisterUserScreen
 import com.ghoast.ui.shop.*
 import com.ghoast.ui.start.StartScreen
 import com.ghoast.ui.user.*
-import com.ghoast.viewmodel.UserTypeViewModel
-import com.ghoast.viewmodel.UserType
+import com.ghoast.ui.session.UserSessionViewModel
+import com.ghoast.ui.session.UserType
 
 @Composable
 fun GhoastNavGraph(
     navController: NavHostController,
-    userTypeViewModel: UserTypeViewModel
+    sessionViewModel: UserSessionViewModel
 ) {
-    val userType = userTypeViewModel.userType.collectAsState().value
-    val isLoading = userTypeViewModel.isLoading.collectAsState().value
+    val userType = sessionViewModel.userType.collectAsState().value
 
     NavHost(
         navController = navController,
@@ -49,42 +48,34 @@ fun GhoastNavGraph(
             )
         }
 
-        composable(Screen.Login.route) { LoginScreen(navController) }
+        composable(Screen.Login.route) { LoginScreen(navController, sessionViewModel) }
         composable(Screen.RegisterUser.route) { RegisterUserScreen(navController) }
         composable(Screen.RegisterShop.route) { RegisterShopScreen(navController) }
-        composable(Screen.OffersHome.route) { OffersHomeScreen(navController) }
+        composable(Screen.OffersHome.route) { OffersHomeScreen(navController, sessionViewModel) }
 
         composable(Screen.AddOffer.route) {
-            if (isLoading) {
-                Text("Φόρτωση...")
-            } else if (userType == UserType.SHOP) {
+            if (userType == UserType.SHOP) {
                 AddOfferScreen(navController)
             } else {
                 Text("Δεν έχετε πρόσβαση σε αυτήν τη σελίδα.")
             }
         }
         composable(Screen.MyShopOffers.route) {
-            if (isLoading) {
-                Text("Φόρτωση...")
-            } else if (userType == UserType.SHOP) {
+            if (userType == UserType.SHOP) {
                 MyShopOffersScreen(navController)
             } else {
                 Text("Δεν έχετε πρόσβαση σε αυτήν τη σελίδα.")
             }
         }
         composable(Screen.ShopProfile.route) {
-            if (isLoading) {
-                Text("Φόρτωση...")
-            } else if (userType == UserType.SHOP) {
+            if (userType == UserType.SHOP) {
                 ShopProfileScreen(navController)
             } else {
                 Text("Δεν έχετε πρόσβαση σε αυτήν τη σελίδα.")
             }
         }
         composable(Screen.EditShopProfile.route) {
-            if (isLoading) {
-                Text("Φόρτωση...")
-            } else if (userType == UserType.SHOP) {
+            if (userType == UserType.SHOP) {
                 EditShopProfileScreen(navController = navController)
             } else {
                 Text("Δεν έχετε πρόσβαση σε αυτήν τη σελίδα.")
@@ -95,9 +86,7 @@ fun GhoastNavGraph(
             arguments = listOf(navArgument("shopId") { type = NavType.StringType })
         ) { backStackEntry ->
             val shopId = backStackEntry.arguments?.getString("shopId") ?: ""
-            if (isLoading) {
-                Text("Φόρτωση...")
-            } else if (userType == UserType.SHOP) {
+            if (userType == UserType.SHOP) {
                 EditShopProfileScreen(navController = navController, shopId = shopId)
             } else {
                 Text("Δεν έχετε πρόσβαση σε αυτήν τη σελίδα.")
@@ -115,9 +104,7 @@ fun GhoastNavGraph(
             arguments = listOf(navArgument("offerId") { type = NavType.StringType })
         ) { backStackEntry ->
             val offerId = backStackEntry.arguments?.getString("offerId") ?: ""
-            if (isLoading) {
-                Text("Φόρτωση...")
-            } else if (userType == UserType.SHOP) {
+            if (userType == UserType.SHOP) {
                 EditOfferScreen(navController = navController, offerId = offerId)
             } else {
                 Text("Δεν έχετε πρόσβαση σε αυτήν τη σελίδα.")
@@ -132,18 +119,14 @@ fun GhoastNavGraph(
         composable("contact") { ContactScreen() }
         composable("notifications") { UserNotificationsScreen() }
         composable(Screen.AddNewShop.route) {
-            if (isLoading) {
-                Text("Φόρτωση...")
-            } else if (userType == UserType.SHOP) {
+            if (userType == UserType.SHOP) {
                 AddNewShopScreen(navController = navController)
             } else {
                 Text("Δεν έχετε πρόσβαση σε αυτήν τη σελίδα.")
             }
         }
         composable(Screen.MyShops.route) {
-            if (isLoading) {
-                Text("Φόρτωση...")
-            } else if (userType == UserType.SHOP) {
+            if (userType == UserType.SHOP) {
                 MyShopsScreen(navController = navController)
             } else {
                 Text("Δεν έχετε πρόσβαση σε αυτήν τη σελίδα.")

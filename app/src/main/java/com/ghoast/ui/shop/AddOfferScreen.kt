@@ -9,7 +9,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
@@ -88,10 +90,12 @@ fun AddOfferScreen(navController: NavController) {
                 modifier = Modifier
                     .padding(padding)
                     .padding(16.dp)
-                    .fillMaxSize(),
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text("➕ Προσθήκη Προσφοράς", style = MaterialTheme.typography.headlineSmall)
+
+            Text("➕ Προσθήκη Προσφοράς", style = MaterialTheme.typography.headlineSmall)
 
                 ExposedDropdownMenuBox(
                     expanded = shopDropdownExpanded,

@@ -27,7 +27,7 @@ class RegisterShopViewModel : ViewModel() {
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     val user = auth.currentUser
-                    user?.sendEmailVerification()  // ✅ Αποστολή email επιβεβαίωσης
+                    user?.sendEmailVerification()
 
                     val uid = user?.uid ?: return@addOnCompleteListener
 
@@ -54,7 +54,8 @@ class RegisterShopViewModel : ViewModel() {
         address: String,
         phone: String,
         website: String,
-        email: String,
+        email: String, // αυτό είναι το auth email
+        contactEmail: String, // νέο πεδίο: email επικοινωνίας
         category: String,
         workingHours: List<Map<String, String>>,
         profileImageUri: Uri?,
@@ -76,6 +77,7 @@ class RegisterShopViewModel : ViewModel() {
                     "phone" to phone,
                     "website" to website,
                     "email" to email,
+                    "contactEmail" to contactEmail, // ✅ προσθήκη
                     "category" to category,
                     "workingHours" to workingHours,
                     "latitude" to latitude,
@@ -87,8 +89,7 @@ class RegisterShopViewModel : ViewModel() {
                     shopData["profilePhotoUri"] = imageUrl
                 }
 
-                val newShopRef = db.collection("shops").document()
-                newShopRef.set(shopData).await()
+                db.collection("shops").document().set(shopData).await()
 
                 val userData = hashMapOf(
                     "uid" to uid,

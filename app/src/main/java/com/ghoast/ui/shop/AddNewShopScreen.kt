@@ -1,5 +1,9 @@
+
+// Updated AddNewShopScreen.kt
 package com.ghoast.ui.shop
 
+import android.app.Activity
+import android.app.TimePickerDialog
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -9,7 +13,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -34,7 +37,6 @@ import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.widget.Autocomplete
 import com.google.android.libraries.places.widget.model.AutocompleteActivityMode
 import java.util.*
-import android.app.TimePickerDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,6 +50,7 @@ fun AddNewShopScreen(navController: NavController) {
     var latLng by remember { mutableStateOf<LatLng?>(null) }
     var website by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
+    var contactEmail by remember { mutableStateOf("") }
 
     val workingDays = listOf("Δευτέρα", "Τρίτη", "Τετάρτη", "Πέμπτη", "Παρασκευή", "Σάββατο", "Κυριακή")
     val workingHours = remember {
@@ -56,7 +59,11 @@ fun AddNewShopScreen(navController: NavController) {
         }
     }
 
-    val categoryOptions = listOf("Ανδρική ένδυση", "Ανδρική υπόδηση", "Γυναικεία ένδυση", "Γυναικεία υπόδηση", "Παιδική ένδυση", "Παιδική υπόδηση", "Αξεσουάρ")
+    val categoryOptions = listOf(
+        "Γυναικεία ένδυση", "Γυναικεία υπόδηση", "Ανδρική ένδυση", "Ανδρική υπόδηση",
+        "Παιδική ένδυση", "Παιδική υπόδηση", "Αθλητική ένδυση", "Αθλητική υπόδηση",
+        "Εσώρουχα", "Καλλυντικά", "Αξεσουάρ", "Κοσμήματα", "Οπτικά", "Ρολόγια"
+    )
     val selectedCategories = remember { mutableStateListOf<String>() }
     var categoryDropdownExpanded by remember { mutableStateOf(false) }
 
@@ -66,7 +73,7 @@ fun AddNewShopScreen(navController: NavController) {
     }
 
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == android.app.Activity.RESULT_OK) {
+        if (result.resultCode == Activity.RESULT_OK) {
             val place = Autocomplete.getPlaceFromIntent(result.data!!)
             address = place.address ?: ""
             latLng = place.latLng
@@ -86,9 +93,16 @@ fun AddNewShopScreen(navController: NavController) {
             value = shopName,
             onValueChange = { shopName = it },
             label = { Text("Όνομα Καταστήματος") },
-            modifier = Modifier.fillMaxWidth(),
-            keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next),
-            keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(androidx.compose.ui.focus.FocusDirection.Down) })
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        OutlinedTextField(
+            value = contactEmail,
+            onValueChange = { contactEmail = it },
+            label = { Text("Email Επικοινωνίας") },
+            isError = contactEmail.isNotEmpty() && !android.util.Patterns.EMAIL_ADDRESS.matcher(contactEmail).matches(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
+            modifier = Modifier.fillMaxWidth()
         )
 
         Button(onClick = {
@@ -102,66 +116,21 @@ fun AddNewShopScreen(navController: NavController) {
         }
 
         OutlinedTextField(
-            value = website,
-            onValueChange = { website = it },
-            label = { Text("Ιστοσελίδα") },
-            modifier = Modifier.fillMaxWidth(),
-            keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next),
-            keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(androidx.compose.ui.focus.FocusDirection.Down) })
-        )
-
-        OutlinedTextField(
             value = phone,
-            onValueChange = { if (it.all { c -> c.isDigit() }) phone = it },
+            onValueChange = { if (it.all(Char::isDigit)) phone = it },
             label = { Text("Τηλέφωνο") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
             modifier = Modifier.fillMaxWidth()
         )
 
-        Text("Ώρες Λειτουργίας", style = MaterialTheme.typography.titleMedium)
-        workingHours.forEach { item ->
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Checkbox(
-                    checked = item.enabled,
-                    onCheckedChange = {
-                        val index = workingHours.indexOf(item)
-                        if (index != -1) {
-                            workingHours[index] = item.copy(enabled = it)
-                        }
-                    }
-                )
-                Text(item.day, modifier = Modifier.weight(1f))
-                Button(onClick = {
-                    val cal = Calendar.getInstance()
-                    TimePickerDialog(context, { _, hour, minute ->
-                        val index = workingHours.indexOf(item)
-                        if (index != -1) {
-                            workingHours[index] = item.copy(from = "%02d:%02d".format(hour, minute))
-                        }
-                        focusManager.clearFocus()
-                    }, cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), true).show()
-                }) {
-                    Text(item.from ?: "Από")
-                }
-                Button(onClick = {
-                    val cal = Calendar.getInstance()
-                    TimePickerDialog(context, { _, hour, minute ->
-                        val index = workingHours.indexOf(item)
-                        if (index != -1) {
-                            workingHours[index] = item.copy(to = "%02d:%02d".format(hour, minute))
-                        }
-                        focusManager.clearFocus()
-                    }, cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), true).show()
-                }) {
-                    Text(item.to ?: "Έως")
-                }
-            }
-        }
+        OutlinedTextField(
+            value = website,
+            onValueChange = { website = it },
+            label = { Text("Ιστοσελίδα ή Social Link") },
+            isError = website.isNotBlank() && !website.startsWith("http"),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Next),
+            modifier = Modifier.fillMaxWidth()
+        )
 
         ExposedDropdownMenuBox(
             expanded = categoryDropdownExpanded,
@@ -176,6 +145,7 @@ fun AddNewShopScreen(navController: NavController) {
                 modifier = Modifier.menuAnchor().fillMaxWidth()
             )
             ExposedDropdownMenu(
+                modifier = Modifier.heightIn(max = 200.dp),
                 expanded = categoryDropdownExpanded,
                 onDismissRequest = { categoryDropdownExpanded = false }
             ) {
@@ -184,11 +154,34 @@ fun AddNewShopScreen(navController: NavController) {
                     DropdownMenuItem(
                         text = { Text(category) },
                         onClick = {
-                            if (selected) selectedCategories.remove(category) else selectedCategories.add(category)
+                            if (selected) selectedCategories.remove(category)
+                            else selectedCategories.add(category)
                         },
                         leadingIcon = { if (selected) Icon(Icons.Rounded.Check, null) }
                     )
                 }
+            }
+        }
+
+        Text("Ώρες Λειτουργίας", style = MaterialTheme.typography.titleMedium)
+        workingHours.forEach { item ->
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                Checkbox(checked = item.enabled, onCheckedChange = {
+                    workingHours[workingHours.indexOf(item)] = item.copy(enabled = it)
+                })
+                Text(item.day, modifier = Modifier.weight(1f))
+                Button(onClick = {
+                    val cal = Calendar.getInstance()
+                    TimePickerDialog(context, { _, h, m ->
+                        workingHours[workingHours.indexOf(item)] = item.copy(from = "%02d:%02d".format(h, m))
+                    }, cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), true).show()
+                }) { Text(item.from ?: "Από") }
+                Button(onClick = {
+                    val cal = Calendar.getInstance()
+                    TimePickerDialog(context, { _, h, m ->
+                        workingHours[workingHours.indexOf(item)] = item.copy(to = "%02d:%02d".format(h, m))
+                    }, cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), true).show()
+                }) { Text(item.to ?: "Έως") }
             }
         }
 
@@ -216,14 +209,11 @@ fun AddNewShopScreen(navController: NavController) {
                     address = address,
                     phone = phone,
                     website = website,
-                    email = "", // προαιρετικό
+                    email = "", // δεν χρειάζεται auth email εδώ
+                    contactEmail = contactEmail,
                     category = selectedCategories.joinToString(", "),
                     workingHours = workingHours.map {
-                        mapOf(
-                            "day" to it.day,
-                            "from" to (it.from ?: ""),
-                            "to" to (it.to ?: "")
-                        )
+                        mapOf("day" to it.day, "from" to (it.from ?: ""), "to" to (it.to ?: ""))
                     },
                     profileImageUri = imageUri,
                     latitude = latLng?.latitude ?: 0.0,

@@ -4,7 +4,6 @@ import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ghoast.model.Shop
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
@@ -17,6 +16,38 @@ class RegisterShopViewModel : ViewModel() {
     private val db = FirebaseFirestore.getInstance()
     private val storage = FirebaseStorage.getInstance()
     private val auth = FirebaseAuth.getInstance()
+
+    fun registerShopUserAndPrepareShop(
+        email: String,
+        password: String,
+        onSuccess: () -> Unit,
+        onError: (Exception) -> Unit
+    ) {
+        auth.createUserWithEmailAndPassword(email, password)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    val user = auth.currentUser
+                    user?.sendEmailVerification()  // ✅ Αποστολή email επιβεβαίωσης
+
+                    val uid = user?.uid ?: return@addOnCompleteListener
+
+                    val userData = hashMapOf(
+                        "email" to email,
+                        "type" to "SHOP",
+                        "needsToCreateShop" to true,
+                        "createdAt" to System.currentTimeMillis()
+                    )
+
+                    db.collection("users")
+                        .document(uid)
+                        .set(userData)
+                        .addOnSuccessListener { onSuccess() }
+                        .addOnFailureListener { e -> onError(e) }
+                } else {
+                    onError(task.exception ?: Exception("Registration failed"))
+                }
+            }
+    }
 
     fun registerShop(
         shopName: String,

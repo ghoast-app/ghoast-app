@@ -26,9 +26,7 @@ fun RegisterUserScreen(navController: NavController) {
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        // Προαιρετικά: handle αποτέλεσμα (π.χ. εμφάνιση Snackbar)
-    }
+    ) {}
 
     LaunchedEffect(success) {
         if (success && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -70,11 +68,15 @@ fun RegisterUserScreen(navController: NavController) {
                 auth.createUserWithEmailAndPassword(email, password)
                     .addOnCompleteListener { task ->
                         if (task.isSuccessful) {
-                            val userId = auth.currentUser?.uid
+                            val user = auth.currentUser
+                            user?.sendEmailVerification()
+
+                            val userId = user?.uid
                             if (userId != null) {
                                 val userData = mapOf(
                                     "email" to email,
-                                    "createdAt" to System.currentTimeMillis()
+                                    "createdAt" to System.currentTimeMillis(),
+                                    "type" to "USER"
                                 )
                                 db.collection("users").document(userId)
                                     .set(userData)
@@ -103,7 +105,10 @@ fun RegisterUserScreen(navController: NavController) {
 
         if (success) {
             Spacer(modifier = Modifier.height(16.dp))
-            Text("Εγγραφή επιτυχής!", color = MaterialTheme.colorScheme.primary)
+            Text(
+                "📨 Επιβεβαίωσε το email σου για να συνδεθείς.",
+                color = MaterialTheme.colorScheme.primary
+            )
         }
     }
 }

@@ -88,7 +88,10 @@ fun RegisterShopScreen(navController: NavHostController) {
     val scrollState = rememberScrollState()
 
     Column(
-        modifier = Modifier.fillMaxSize().verticalScroll(scrollState).padding(16.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(scrollState)
+            .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Spacer(modifier = Modifier.height(32.dp))
@@ -136,17 +139,13 @@ fun RegisterShopScreen(navController: NavHostController) {
             value = website,
             onValueChange = { website = it },
             label = { Text("Ιστοσελίδα") },
-            modifier = Modifier.fillMaxWidth(),
-            keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next),
-            keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
+            modifier = Modifier.fillMaxWidth()
         )
 
         OutlinedTextField(
             value = phone,
             onValueChange = { if (it.all { c -> c.isDigit() }) phone = it },
             label = { Text("Τηλέφωνο") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -154,8 +153,8 @@ fun RegisterShopScreen(navController: NavHostController) {
         workingHours.forEach { item ->
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Checkbox(
                     checked = item.enabled,
@@ -174,7 +173,6 @@ fun RegisterShopScreen(navController: NavHostController) {
                         if (index != -1) {
                             workingHours[index] = item.copy(from = "%02d:%02d".format(hour, minute))
                         }
-                        focusManager.clearFocus()
                     }, cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), true).show()
                 }) {
                     Text(item.from ?: "Από")
@@ -186,7 +184,6 @@ fun RegisterShopScreen(navController: NavHostController) {
                         if (index != -1) {
                             workingHours[index] = item.copy(to = "%02d:%02d".format(hour, minute))
                         }
-                        focusManager.clearFocus()
                     }, cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), true).show()
                 }) {
                     Text(item.to ?: "Έως")
@@ -215,7 +212,8 @@ fun RegisterShopScreen(navController: NavHostController) {
                     DropdownMenuItem(
                         text = { Text(category) },
                         onClick = {
-                            if (selected) selectedCategories.remove(category) else selectedCategories.add(category)
+                            if (selected) selectedCategories.remove(category)
+                            else selectedCategories.add(category)
                         },
                         leadingIcon = { if (selected) Icon(Icons.Rounded.Check, null) }
                     )
@@ -246,6 +244,7 @@ fun RegisterShopScreen(navController: NavHostController) {
                 val auth = FirebaseAuth.getInstance()
                 auth.createUserWithEmailAndPassword(email, password)
                     .addOnSuccessListener {
+                        auth.currentUser?.sendEmailVerification() // ✅
                         viewModel.registerShop(
                             shopName = shopName,
                             address = address,
@@ -265,7 +264,7 @@ fun RegisterShopScreen(navController: NavHostController) {
                             longitude = latLng?.longitude ?: 0.0,
                             onSuccess = {
                                 isLoading = false
-                                Toast.makeText(context, "Εγγραφή επιτυχής!", Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, "📩 Επιτυχής εγγραφή! Ελέγξτε το email σας για επιβεβαίωση.", Toast.LENGTH_LONG).show()
                                 navController.navigate(Screen.Login.route) {
                                     popUpTo(Screen.RegisterShop.route) { inclusive = true }
                                 }

@@ -3,6 +3,8 @@ package com.ghoast.ui.user
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,7 +22,8 @@ import com.ghoast.ui.user.ShopCard
 @Composable
 fun FavoriteShopsScreen(
     navController: NavHostController,
-    favoritesViewModel: FavoritesViewModel = viewModel()
+    favoritesViewModel: FavoritesViewModel = viewModel(),
+    fromMenu: Boolean = false
 ) {
     val filteredShops by favoritesViewModel.filteredFavoriteShops.collectAsState()
     val searchQuery by favoritesViewModel.shopSearchQuery.collectAsState()
@@ -29,7 +32,18 @@ fun FavoriteShopsScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Αγαπημένα Καταστήματα") })
+            TopAppBar(
+                title = { Text("Αγαπημένα Καταστήματα") },
+                navigationIcon = {
+                    IconButton(onClick = {
+                        navController.navigate(Screen.OffersHome.route + "?fromMenu=true") {
+                            popUpTo(0)
+                        }
+                    }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Πίσω")
+                    }
+                }
+            )
         }
     ) { padding ->
         Column(
@@ -38,7 +52,6 @@ fun FavoriteShopsScreen(
                 .padding(padding)
                 .padding(8.dp)
         ) {
-            // 🔽 Dropdown για ταξινόμηση
             ExposedDropdownMenuBox(
                 expanded = expanded,
                 onExpandedChange = { expanded = !expanded }
@@ -72,7 +85,6 @@ fun FavoriteShopsScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // 🔍 SearchBar για καταστήματα
             TextField(
                 value = searchQuery,
                 onValueChange = { favoritesViewModel.updateShopSearchQuery(it) },

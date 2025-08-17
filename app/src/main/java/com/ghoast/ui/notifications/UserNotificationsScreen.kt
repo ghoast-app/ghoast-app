@@ -4,7 +4,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -12,14 +14,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import com.ghoast.ui.components.LoadingSpinner
+import com.ghoast.ui.navigation.Screen
 import com.ghoast.ui.notifications.viewmodel.NotificationsViewModel
 import kotlinx.coroutines.launch
-import androidx.compose.material.icons.filled.Close
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun UserNotificationsScreen() {
+fun UserNotificationsScreen(
+    navController: NavHostController,
+    fromMenu: Boolean = false
+) {
     val viewModel: NotificationsViewModel = viewModel()
     val notifications by viewModel.notifications.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -31,6 +37,15 @@ fun UserNotificationsScreen() {
         topBar = {
             TopAppBar(
                 title = { Text("📬 Οι Ειδοποιήσεις σου") },
+                navigationIcon = {
+                    IconButton(onClick = {
+                        navController.navigate(Screen.OffersHome.route + "?fromMenu=true") {
+                            popUpTo(0)
+                        }
+                    }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Πίσω")
+                    }
+                },
                 actions = {
                     if (notifications.isNotEmpty()) {
                         IconButton(onClick = {
@@ -52,7 +67,12 @@ fun UserNotificationsScreen() {
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(16.dp)
+        ) {
             if (isLoading) {
                 LoadingSpinner()
             } else if (notifications.isEmpty()) {

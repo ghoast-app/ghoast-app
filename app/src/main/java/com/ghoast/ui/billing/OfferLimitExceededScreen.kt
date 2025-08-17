@@ -1,9 +1,11 @@
 package com.ghoast.ui.billing
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -15,16 +17,32 @@ import kotlinx.coroutines.launch
 @Composable
 fun OfferLimitExceededScreen(
     billingViewModel: BillingViewModel = viewModel(),
+    fromMenu: Boolean = false,
     onCancel: () -> Unit,
     onPaymentSuccess: () -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
 
+    if (fromMenu) {
+        BackHandler { onCancel() }
+    }
+
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("Ξεπέρασες το όριο προσφορών!") }
-            )
+            if (fromMenu) {
+                TopAppBar(
+                    title = { Text("Ξεπέρασες το όριο προσφορών!") },
+                    navigationIcon = {
+                        IconButton(onClick = { onCancel() }) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        }
+                    }
+                )
+            } else {
+                TopAppBar(
+                    title = { Text("Ξεπέρασες το όριο προσφορών!") }
+                )
+            }
         }
     ) { padding ->
         Column(
@@ -74,9 +92,7 @@ fun OfferLimitExceededScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            TextButton(
-                onClick = onCancel
-            ) {
+            TextButton(onClick = onCancel) {
                 Text("❌ Άκυρο")
             }
         }

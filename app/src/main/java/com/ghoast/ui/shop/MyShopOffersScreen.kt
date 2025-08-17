@@ -1,9 +1,12 @@
 package com.ghoast.ui.shop
 
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -13,13 +16,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import com.ghoast.model.Shop
 import com.ghoast.ui.navigation.Screen
 import com.ghoast.viewmodel.MyShopOffersViewModel
-import com.ghoast.model.Shop
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MyShopOffersScreen(navController: NavHostController) {
+fun MyShopOffersScreen(navController: NavHostController, fromMenu: Boolean = false) {
     val context = LocalContext.current
     val viewModel: MyShopOffersViewModel = viewModel()
     val offers by viewModel.offers.collectAsState()
@@ -38,7 +41,32 @@ fun MyShopOffersScreen(navController: NavHostController) {
         }
     }
 
-    Scaffold { paddingValues ->
+    if (fromMenu) {
+        BackHandler {
+            navController.navigate(Screen.OffersHome.route + "?fromMenu=true") {
+                popUpTo(Screen.MyShopOffers.route) { inclusive = true }
+            }
+        }
+    }
+
+    Scaffold(
+        topBar = {
+            if (fromMenu) {
+                TopAppBar(
+                    title = { Text("Οι Προσφορές μου") },
+                    navigationIcon = {
+                        IconButton(onClick = {
+                            navController.navigate(Screen.OffersHome.route + "?fromMenu=true") {
+                                popUpTo(Screen.MyShopOffers.route) { inclusive = true }
+                            }
+                        }) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        }
+                    }
+                )
+            }
+        }
+    ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -85,7 +113,6 @@ fun MyShopOffersScreen(navController: NavHostController) {
                     },
                     modifier = Modifier.align(Alignment.End)
                 ) {
-                    Text("✏ Επεξεργασία Καταστήματος")
                 }
             }
 

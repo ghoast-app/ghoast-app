@@ -4,6 +4,8 @@ import android.location.Location
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,7 +26,10 @@ import com.ghoast.ui.user.ShopCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AllShopsScreen(navController: NavHostController) {
+fun AllShopsScreen(
+    navController: NavHostController,
+    fromMenu: Boolean = false
+) {
     val viewModel: AllShopsViewModel = viewModel()
     val favoritesViewModel: FavoritesViewModel = viewModel()
     val sortedShops by viewModel.sortedShops.collectAsState()
@@ -49,81 +54,98 @@ fun AllShopsScreen(navController: NavHostController) {
     val selectedSort = viewModel.selectedSortMode
     val sortOptions = ShopSortMode.values().toList()
 
-    Column(modifier = Modifier.fillMaxSize().padding(8.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            ExposedDropdownMenuBox(
-                expanded = expandedSort,
-                onExpandedChange = { expandedSort = !expandedSort }
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Όλα τα Καταστήματα") },
+                navigationIcon = {
+                    IconButton(onClick = {
+                        navController.navigate(Screen.OffersHome.route + "?fromMenu=true") {
+                            popUpTo(0)
+                        }
+                    }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Πίσω")
+                    }
+                }
+            )
+        }
+    ) { padding ->
+        Column(modifier = Modifier.fillMaxSize().padding(padding).padding(8.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                TextField(
-                    readOnly = true,
-                    value = selectedSort.label,
-                    onValueChange = {},
-                    label = { Text("Ταξινόμηση") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedSort) },
-                    colors = ExposedDropdownMenuDefaults.textFieldColors(),
-                    modifier = Modifier.menuAnchor().weight(1f)
-                )
-
-                ExposedDropdownMenu(
+                ExposedDropdownMenuBox(
                     expanded = expandedSort,
-                    onDismissRequest = { expandedSort = false }
+                    onExpandedChange = { expandedSort = !expandedSort }
                 ) {
-                    sortOptions.forEach { mode ->
-                        DropdownMenuItem(
-                            text = { Text(mode.label) },
-                            onClick = {
-                                viewModel.setSortMode(mode)
-                                expandedSort = false
-                            }
-                        )
+                    TextField(
+                        readOnly = true,
+                        value = selectedSort.label,
+                        onValueChange = {},
+                        label = { Text("Ταξινόμηση") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedSort) },
+                        colors = ExposedDropdownMenuDefaults.textFieldColors(),
+                        modifier = Modifier.menuAnchor().weight(1f)
+                    )
+
+                    ExposedDropdownMenu(
+                        expanded = expandedSort,
+                        onDismissRequest = { expandedSort = false }
+                    ) {
+                        sortOptions.forEach { mode ->
+                            DropdownMenuItem(
+                                text = { Text(mode.label) },
+                                onClick = {
+                                    viewModel.setSortMode(mode)
+                                    expandedSort = false
+                                }
+                            )
+                        }
                     }
                 }
             }
-        }
 
-        Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-        TextField(
-            value = searchQuery,
-            onValueChange = { viewModel.updateSearchQuery(it) },
-            placeholder = { Text("Αναζήτηση καταστήματος...") },
-            modifier = Modifier.fillMaxWidth()
-        )
+            TextField(
+                value = searchQuery,
+                onValueChange = { viewModel.updateSearchQuery(it) },
+                placeholder = { Text("Αναζήτηση καταστήματος...") },
+                modifier = Modifier.fillMaxWidth()
+            )
 
-        Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-        if (filteredShops.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("🏬", style = MaterialTheme.typography.displayMedium)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("Δεν υπάρχουν καταστήματα διαθέσιμα.", textAlign = TextAlign.Center)
+            if (filteredShops.isEmpty()) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("🏬", style = MaterialTheme.typography.displayMedium)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text("Δεν υπάρχουν καταστήματα διαθέσιμα.", textAlign = TextAlign.Center)
+                    }
                 }
-            }
-        } else {
-            LazyColumn {
-                items(filteredShops) { shop ->
-                    val distance = if (viewModel.userLatitude != null && viewModel.userLongitude != null) {
-                        LocationUtils.calculateHaversineDistance(
-                            viewModel.userLatitude!!,
-                            viewModel.userLongitude!!,
-                            shop.latitude,
-                            shop.longitude
-                        )
-                    } else null
+            } else {
+                LazyColumn {
+                    items(filteredShops) { shop ->
+                        val distance = if (viewModel.userLatitude != null && viewModel.userLongitude != null) {
+                            LocationUtils.calculateHaversineDistance(
+                                viewModel.userLatitude!!,
+                                viewModel.userLongitude!!,
+                                shop.latitude,
+                                shop.longitude
+                            )
+                        } else null
 
-                    ShopCard(
-                        shop = shop,
-                        isFavorite = favorites.contains(shop.id),
-                        onToggleFavorite = { viewModel.toggleFavorite(shop.id) },
-                        distanceInKm = distance?.toFloat(),
-                        onClick = { navController.navigate(Screen.ShopDetails.createRoute(shop.id)) }
-                    )
-                    Divider()
+                        ShopCard(
+                            shop = shop,
+                            isFavorite = favorites.contains(shop.id),
+                            onToggleFavorite = { viewModel.toggleFavorite(shop.id) },
+                            distanceInKm = distance?.toFloat(),
+                            onClick = { navController.navigate(Screen.ShopDetails.createRoute(shop.id)) }
+                        )
+                        Divider()
+                    }
                 }
             }
         }

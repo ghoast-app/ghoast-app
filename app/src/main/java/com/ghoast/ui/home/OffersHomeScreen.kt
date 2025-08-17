@@ -39,16 +39,32 @@ import kotlinx.coroutines.launch
 @Composable
 fun OffersHomeScreen(
     navController: NavHostController,
-    sessionViewModel: UserSessionViewModel
+    sessionViewModel: UserSessionViewModel,
+    fromMenu: Boolean = false
 ) {
     val viewModel: OffersHomeViewModel = viewModel()
     val recommendationViewModel: RecommendationViewModel = viewModel()
 
     val offers by viewModel.filteredOffers.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
-
     val userType by sessionViewModel.userType.collectAsState()
     val isLoggedIn by sessionViewModel.isLoggedIn.collectAsState()
+
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
+
+    var menuExpanded by remember { mutableStateOf(false) }
+    var showFiltersDialog by remember { mutableStateOf(false) }
+    var showGPSDialog by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
+
+    LaunchedEffect(fromMenu) {
+        if (fromMenu) {
+            menuExpanded = true
+        }
+    }
 
     LaunchedEffect(viewModel.userLatitude, viewModel.userLongitude, userType, isLoggedIn) {
         Log.d("DEBUG_SESSION", "🔍 userType = $userType, isLoggedIn = $isLoggedIn")
@@ -62,16 +78,6 @@ fun OffersHomeScreen(
             Log.d("DEBUG_SESSION", "⛔ Not loading recommended offers (wrong type or not logged in)")
         }
     }
-
-    val snackbarHostState = remember { SnackbarHostState() }
-    val coroutineScope = rememberCoroutineScope()
-    val context = LocalContext.current
-    val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
-
-    var menuExpanded by remember { mutableStateOf(false) }
-    var showFiltersDialog by remember { mutableStateOf(false) }
-    var showGPSDialog by remember { mutableStateOf(false) }
-    var searchQuery by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
         val fineGranted = ContextCompat.checkSelfPermission(
@@ -127,8 +133,12 @@ fun OffersHomeScreen(
                 navController = navController,
                 menuExpanded = menuExpanded,
                 onMenuExpand = { menuExpanded = it },
-                onShowHelp = { navController.navigate("help") },
-                onShowContact = { navController.navigate("contact") },
+                onShowHelp = {
+                    navController.navigate("help?fromMenu=true")
+                },
+                onShowContact = {
+                    navController.navigate("contact?fromMenu=true")
+                },
                 searchQuery = searchQuery,
                 onSearchQueryChange = {
                     searchQuery = it

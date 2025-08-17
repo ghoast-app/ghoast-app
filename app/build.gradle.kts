@@ -48,6 +48,7 @@ dependencies {
     implementation(libs.firebase.firestore.ktx)
     implementation(libs.play.services.location)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.material.icons.core)
     debugImplementation("androidx.compose.ui:ui-tooling:1.5.4")
 
     // Navigation Compose

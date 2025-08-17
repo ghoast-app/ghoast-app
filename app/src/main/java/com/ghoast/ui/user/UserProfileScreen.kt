@@ -1,12 +1,15 @@
 package com.ghoast.ui.user
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import com.google.firebase.auth.FirebaseAuth
 import com.ghoast.viewmodel.FavoritesViewModel
 import com.ghoast.viewmodel.UserType
@@ -15,6 +18,8 @@ import com.ghoast.viewmodel.UserTypeViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserProfileScreen(
+    navController: NavHostController,
+    fromMenu: Boolean,
     userTypeViewModel: UserTypeViewModel = viewModel(),
     favoritesViewModel: FavoritesViewModel = viewModel()
 ) {
@@ -39,7 +44,18 @@ fun UserProfileScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Το Προφίλ μου") }
+                title = { Text("Το Προφίλ μου") },
+                navigationIcon = {
+                    if (fromMenu) {
+                        IconButton(onClick = {
+                            navController.navigate("offers_home?fromMenu=true") {
+                                popUpTo("offers_home") { inclusive = true }
+                            }
+                        }) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Πίσω")
+                        }
+                    }
+                }
             )
         }
     ) { padding ->

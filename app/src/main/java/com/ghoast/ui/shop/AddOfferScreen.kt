@@ -1,9 +1,8 @@
-// AddOfferScreen.kt με Loading Spinner integration
-
 package com.ghoast.ui.shop
 
 import android.net.Uri
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -14,6 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -27,11 +27,15 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
+import com.ghoast.ui.navigation.Screen
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddOfferScreen(navController: NavController) {
+fun AddOfferScreen(
+    navController: NavController,
+    fromMenu: Boolean = false
+) {
     val context = LocalContext.current
     val viewModel: AddOfferViewModel = viewModel()
     val scope = rememberCoroutineScope()
@@ -52,25 +56,14 @@ fun AddOfferScreen(navController: NavController) {
 
     val discountOptions = listOf("10%", "20%", "30%", "40%", "50%", "60%", "70%", "80%", "90%")
     val categoryOptions = listOf(
-        "Γυναικεία ένδυση",
-        "Γυναικεία υπόδηση",
-        "Ανδρική ένδυση",
-        "Ανδρική υπόδηση",
-        "Παιδική ένδυση",
-        "Παιδική υπόδηση",
-        "Αθλητική ένδυση",
-        "Αθλητική υπόδηση",
-        "Εσώρουχα",
-        "Καλλυντικά",
-        "Αξεσουάρ",
-        "Κοσμήματα",
-        "Οπτικά",
-        "Ρολόγια"
+        "Γυναικεία ένδυση", "Γυναικεία υπόδηση", "Ανδρική ένδυση", "Ανδρική υπόδηση",
+        "Παιδική ένδυση", "Παιδική υπόδηση", "Αθλητική ένδυση", "Αθλητική υπόδηση",
+        "Εσώρουχα", "Καλλυντικά", "Αξεσουάρ", "Κοσμήματα", "Οπτικά", "Ρολόγια"
     )
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetMultipleContents()
-    ) { uris: List<Uri> ->
+    ) { uris ->
         val availableSlots = 3 - imageUris.size
         val urisToAdd = uris.take(availableSlots)
         imageUris.addAll(urisToAdd)
@@ -84,7 +77,32 @@ fun AddOfferScreen(navController: NavController) {
         viewModel.loadMyShops()
     }
 
-    Scaffold { padding ->
+    if (fromMenu) {
+        BackHandler {
+            navController.navigate(Screen.OffersHome.route) {
+                popUpTo(Screen.AddOffer.route) { inclusive = true }
+            }
+        }
+    }
+
+    Scaffold(
+        topBar = {
+            if (fromMenu) {
+                TopAppBar(
+                    title = { Text("Προσθήκη Προσφοράς") },
+                    navigationIcon = {
+                        IconButton(onClick = {
+                            navController.navigate(Screen.OffersHome.route) {
+                                popUpTo(Screen.AddOffer.route) { inclusive = true }
+                            }
+                        }) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        }
+                    }
+                )
+            }
+        }
+    ) { padding ->
         Box(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier
@@ -94,9 +112,6 @@ fun AddOfferScreen(navController: NavController) {
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-
-            Text("➕ Προσθήκη Προσφοράς", style = MaterialTheme.typography.headlineSmall)
-
                 ExposedDropdownMenuBox(
                     expanded = shopDropdownExpanded,
                     onExpandedChange = { shopDropdownExpanded = !shopDropdownExpanded }
@@ -106,7 +121,7 @@ fun AddOfferScreen(navController: NavController) {
                         onValueChange = {},
                         readOnly = true,
                         label = { Text("Κατάστημα") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = shopDropdownExpanded) },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(shopDropdownExpanded) },
                         modifier = Modifier.menuAnchor().fillMaxWidth()
                     )
                     ExposedDropdownMenu(
@@ -282,12 +297,16 @@ fun AddOfferScreen(navController: NavController) {
                 AlertDialog(
                     onDismissRequest = {
                         showSuccessDialog = false
-                        navController.popBackStack()
+                        navController.navigate(Screen.OffersHome.route) {
+                            popUpTo(Screen.AddOffer.route) { inclusive = true }
+                        }
                     },
                     confirmButton = {
                         TextButton(onClick = {
                             showSuccessDialog = false
-                            navController.popBackStack()
+                            navController.navigate(Screen.OffersHome.route) {
+                                popUpTo(Screen.AddOffer.route) { inclusive = true }
+                            }
                         }) {
                             Text("OK")
                         }

@@ -1,17 +1,25 @@
 package com.ghoast.ui.contact
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
+import com.ghoast.ui.navigation.Screen
 import com.ghoast.viewmodel.ContactViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ContactScreen(viewModel: ContactViewModel = viewModel()) {
+fun ContactScreen(
+    navController: NavHostController,
+    fromMenu: Boolean = false,
+    viewModel: ContactViewModel = viewModel()
+) {
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var message by remember { mutableStateOf("") }
@@ -20,7 +28,18 @@ fun ContactScreen(viewModel: ContactViewModel = viewModel()) {
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Επικοινωνία") })
+            TopAppBar(
+                title = { Text("Επικοινωνία") },
+                navigationIcon = {
+                    IconButton(onClick = {
+                        navController.navigate(Screen.OffersHome.route + "?fromMenu=true") {
+                            popUpTo(0)
+                        }
+                    }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Πίσω")
+                    }
+                }
+            )
         }
     ) { padding ->
         Column(
@@ -66,7 +85,6 @@ fun ContactScreen(viewModel: ContactViewModel = viewModel()) {
             }
         }
 
-        // ✅ Επιβεβαίωση με AlertDialog
         if (messageSent) {
             AlertDialog(
                 onDismissRequest = {
